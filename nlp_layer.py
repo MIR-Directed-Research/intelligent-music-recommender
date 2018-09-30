@@ -3,7 +3,7 @@ import re
 import nltk
 from nltk.corpus import stopwords
 
-from knowledge_base_api import get_all_nouns
+from knowledge_base_api import KnowledgeBaseAPI
 
 
 class NLP:
@@ -36,7 +36,7 @@ class NLP:
             nltk.download('stopwords')
 
         # This is expensive, so only done on init
-        self.db_nouns_patterns = get_all_nouns()
+        self.db_nouns_patterns = KnowledgeBaseAPI.get_all_nouns()
 
     def _get_stop_words(self):
         # Remove all keywords from stopwords
