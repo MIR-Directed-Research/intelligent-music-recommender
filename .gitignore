@@ -105,3 +105,4 @@ venv.bak/
 
 # etc
 .idea
+*.iml
