@@ -3,7 +3,7 @@ import re
 import nltk
 from nltk.corpus import stopwords
 
-from knowledge_base_api import KnowledgeBaseAPI
+from knowledge_base.api import KnowledgeBaseAPI
 
 
 class NLP:
