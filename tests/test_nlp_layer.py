@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
-from nlp_layer import NLP
-from knowledge_base_api import KnowledgeBaseAPI
+from nlp.nlp_layer import NLP
+from knowledge_base.api import KnowledgeBaseAPI
 
 
 class TestNLP(unittest.TestCase):
