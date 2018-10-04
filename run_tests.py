@@ -8,6 +8,7 @@ To run the tests:
     python ./run_tests.py
 """
 from tests.test_nlp_layer import TestNLP
+from tests.test_knowledge_base_api import TestMusicKnowledgeBaseAPI
 
 if __name__ == '__main__':
     unittest.main()
