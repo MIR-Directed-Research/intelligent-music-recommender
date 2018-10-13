@@ -1,3 +1,5 @@
+-- This schema is used to setup a Database to run the tests.
+
 CREATE TABLE artists(
     name varchar(40) primary key
 );

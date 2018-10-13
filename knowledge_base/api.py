@@ -1,5 +1,6 @@
 import sqlite3
 
+
 class KnowledgeBaseAPI:
     """
     This layer stores the interface to the knowledge-engine.
@@ -19,7 +20,7 @@ class KnowledgeBaseAPI:
         try:
             self.conn = sqlite3.connect(self.dbName)
         except sqlite3.Error as e:
-            print(f"ERR: Failed to open connection to db: '{self.dbName}'")
+            print("ERR: Failed to open connection to db: '{}'".format(self.dbName))
             return False
         return True
 
@@ -27,15 +28,15 @@ class KnowledgeBaseAPI:
         if self.conn is None:
             return None
 
-        get_song_sql = f"""
+        get_song_sql = """
             SELECT *
             FROM songs
-            WHERE name == "{song_name}";
-        """
+            WHERE name == "{}";
+        """.format(song_name)
         try:
             cursor = self.conn.cursor()
         except sqlite3.ProgrammingError as e:
-            print(f"ERR: Must open connection to DB before executing query.")
+            print("ERR: Must open connection to DB before executing query.")
             return None
 
         try:
@@ -44,7 +45,7 @@ class KnowledgeBaseAPI:
             res = cursor.fetchone()
 
         except sqlite3.Error as e:
-            print(f"{e}: An error occurred when querying for song: {song_name}")
+            print("{}: An error occurred when querying for song: {}".format(e, song_name))
             res = None
 
         finally:
@@ -58,7 +59,7 @@ class KnowledgeBaseAPI:
         self.conn.close()
 
     def __str__(self):
-        return f"Knowledge Representation API object for {self.dbName} DB."
+        return "Knowledge Representation API object for {} DB.".format(self.dbName)
 
     # TODO: Implement.
     @staticmethod
