@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 
 
 class KnowledgeBaseAPI:
@@ -10,58 +11,28 @@ class KnowledgeBaseAPI:
 
     def __init__(self, dbName):
         self.dbName = dbName
-        self.conn = None
-
-    def open_connection(self):
-        """
-        Returns:
-            (bool): indicates success.
-        """
-        try:
-            self.conn = sqlite3.connect(self.dbName)
-        except sqlite3.Error as e:
-            print("ERR: Failed to open connection to db: '{}'".format(self.dbName))
-            return False
-        return True
-
-    def get_song_data(self, song_name):
-        if self.conn is None:
-            return None
-
-        get_song_sql = """
-            SELECT *
-            FROM songs
-            WHERE name == "{}";
-        """.format(song_name)
-        try:
-            cursor = self.conn.cursor()
-        except sqlite3.ProgrammingError as e:
-            print("ERR: Must open connection to DB before executing query.")
-            return None
-
-        try:
-            cursor.execute(get_song_sql)
-            self.conn.commit()
-            res = cursor.fetchone()
-
-        except sqlite3.Error as e:
-            print("{}: An error occurred when querying for song: {}".format(e, song_name))
-            res = None
-
-        finally:
-            cursor.close()
-
-        return res
-
-    def close_connection(self):
-        if self.conn is None:
-            return
-        self.conn.close()
 
     def __str__(self):
         return "Knowledge Representation API object for {} DB.".format(self.dbName)
 
-    # TODO: Implement.
+    @property
+    def connection(self):
+        return sqlite3.connect(self.dbName)
+
+    def get_song_data(self, song_name):
+        # Auto-close.
+        with closing(self.connection) as con:
+            # Auto-commit
+            with con:
+                # Auto-close.
+                with closing(con.cursor()) as cursor:
+                    cursor.execute("""
+                    SELECT *
+                    FROM songs
+                    WHERE name == (?);
+                    """, (song_name,))
+                    return cursor.fetchone()
+
     @staticmethod
     def get_all_nouns():
         """Gets a list of all the names, genres,
