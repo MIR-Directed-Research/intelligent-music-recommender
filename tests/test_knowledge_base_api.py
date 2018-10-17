@@ -23,10 +23,6 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         res = self.kb_api.get_song_data("Not In Database")
         assert res == None
 
-    def test_get_song_data_no_open_connection(self):
-        res = self.kb_api.get_song_data("Not In Database")
-        assert res == None
-
 
 if __name__ == '__main__':
     unittest.main()
