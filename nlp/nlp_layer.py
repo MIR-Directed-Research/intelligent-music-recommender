@@ -24,19 +24,22 @@ class NLP:
     """
 
     keywords = {
-        'control_play': ['start', 'play'],
+        'control_play': ['start', 'play '],
+        'control_stop': ['stop'],
+        'control_pause': ['pause'],
+        'control_foward': ['skip', 'next'],
         'query_artist': ['who', 'artist'],
     }
 
-    def __init__(self):
+    def __init__(self, db_path):
         # Download the stopwords if necessary.
         try:
             nltk.data.find('corpora/stopwords')
         except LookupError:
             nltk.download('stopwords')
 
-        # This is expensive, so only done on init
-        self.db_nouns_patterns = KnowledgeBaseAPI.get_all_nouns()
+        self.kb_api = KnowledgeBaseAPI(db_path)
+        self.db_nouns_patterns = self.kb_api.get_all_music_entities()
 
     def _get_stop_words(self):
         # Remove all keywords from stopwords

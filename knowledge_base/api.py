@@ -33,11 +33,23 @@ class KnowledgeBaseAPI:
                     """, (song_name,))
                     return cursor.fetchone()
 
-    @staticmethod
-    def get_all_nouns():
+    def get_all_music_entities(self):
         """Gets a list of all the names, genres,
         artists, ect. in the DB
 
         :return: A list of all nouns in the database
         """
-        return ['example']
+        # Auto-close.
+        with closing(self.connection) as con:
+            # Auto-commit
+            with con:
+                # Auto-close.
+                with closing(con.cursor()) as cursor:
+                    cursor.execute("""
+                        SELECT name
+                        FROM songs
+                        UNION
+                        SELECT name
+                        FROM artists
+                        """)
+                    return cursor.fetchone()
