@@ -78,10 +78,10 @@ class KnowledgeBaseAPI:
                 # Auto-close.
                 with closing(con.cursor()) as cursor:
                     cursor.execute("""
-                        SELECT name
-                        FROM songs
+                        SELECT name AS song_name
+                        FROM songs JOIN nodes ON node_id == id
                         UNION
-                        SELECT name
-                        FROM artists
+                        SELECT name AS artist_name
+                        FROM artists JOIN nodes ON node_id == id
                         """)
                     return cursor.fetchone()
