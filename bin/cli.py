@@ -1,3 +1,9 @@
+"""
+Run this script from within the /bin directory:
+
+cd bin/
+python3 cli
+"""
 import sys
 
 sys.path.append('../')

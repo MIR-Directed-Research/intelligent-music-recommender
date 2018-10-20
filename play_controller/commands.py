@@ -13,7 +13,7 @@ def control_pause(entity):
     return 'Not implemented'
 
 
-def control_foward(entity):
+def control_forward(entity):
     # TODO: implement
     return 'Not implemented'
 
@@ -32,7 +32,7 @@ intentions = {
     'control_play': (['start', 'play '], control_play),
     'control_stop': (['stop'], control_stop),
     'control_pause': (['pause'], control_pause),
-    'control_foward': (['skip', 'next'], control_foward),
+    'control_forward': (['skip', 'next'], control_forward),
     'query_artist': (['who', 'artist'], query_artist),
     'default': ([''], default),
 }
