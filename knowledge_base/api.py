@@ -27,9 +27,12 @@ class KnowledgeBaseAPI:
                 # Auto-close.
                 with closing(con.cursor()) as cursor:
                     cursor.execute("""
-                    SELECT *
-                    FROM songs
-                    WHERE name == (?);
+                    SELECT song.name, artist.name
+                    FROM (
+                        SELECT name, main_artist_id
+                        FROM songs JOIN nodes on node_id == id
+                        WHERE name == (?)
+                    ) AS song JOIN nodes AS artist on main_artist_id == id;
                     """, (song_name,))
                     return cursor.fetchone()
 
