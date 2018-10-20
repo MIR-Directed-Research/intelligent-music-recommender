@@ -17,15 +17,41 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
 
     def test_get_song_data(self):
         res = self.kb_api.get_song_data("Despacito")
-        assert res == ('Despacito', 'Justin Bieber')
+        # we don't care what the node ID is
+        self.assertEqual(
+            res, ('Despacito', 'Justin Bieber'),
+            "Queried song data did not match expected.",
+        )
 
     def test_get_song_data_dne(self):
         res = self.kb_api.get_song_data("Not In Database")
-        assert res == None
+        self.assertTrue(res is None, "Expected 'None' result for queried song not in DB.")
 
-    def test_get_song_data_no_open_connection(self):
-        res = self.kb_api.get_song_data("Not In Database")
-        assert res == None
+    def test_find_similar_song(self):
+        res = self.kb_api.get_similar_entities("Despacito")
+        self.assertEqual(
+            len(res), 1,
+            "Expected only one song similar to \"Despacito\".",
+        )
+        self.assertEqual(
+            res[0][0], "Rock Your Body",
+            "Expected to find \"Rock Your Body\" as similar to \"Despacito\".",
+        )
+
+    def test_find_similar_artist(self):
+        res = self.kb_api.get_similar_entities("Justin Bieber")
+        self.assertEqual(
+            len(res), 2,
+            "Expected exactly two artists similar to Justin Bieber.",
+        )
+        self.assertEqual(
+            res[0][0], "Justin Timberlake",
+            "Expected to find Justin Timberlake as similar to Justin Bieber.",
+        )
+        self.assertEqual(
+            res[1][0], "Shawn Mendes",
+            "Expected to find Justin Timberlake as similar to Justin Bieber.",
+        )
 
 
 if __name__ == '__main__':
