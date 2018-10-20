@@ -13,7 +13,7 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         # Check working directory, update path to DB accordingly.
         if os.getcwd().split('/')[-1] == 'tests':
             DB_path = "test.db"
-        self.kb_api = KnowledgeBaseAPI(DB_path)
+        self.kb_api = KnowledgeBaseAPI(dbName=DB_path)
 
     def test_get_song_data(self):
         res = self.kb_api.get_song_data("Despacito")

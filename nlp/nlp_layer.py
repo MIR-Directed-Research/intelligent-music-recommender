@@ -22,29 +22,24 @@ class NLP:
         https://stackoverflow.com/questions/42322902/how-to-get-parse-tree-using-python-nltk
         https://www.nltk.org/book/ch08.html
     """
+    extra_stopwords = {'s', 'hey', 'want', 'you'}
 
-    keywords = {
-        'control_play': ['start', 'play '],
-        'control_stop': ['stop'],
-        'control_pause': ['pause'],
-        'control_foward': ['skip', 'next'],
-        'query_artist': ['who', 'artist'],
-    }
-
-    def __init__(self, db_path):
+    def __init__(self, db_path, keywords):
         # Download the stopwords if necessary.
         try:
             nltk.data.find('corpora/stopwords')
         except LookupError:
             nltk.download('stopwords')
 
+        self.commands = keywords
         self.kb_api = KnowledgeBaseAPI(db_path)
         self.db_nouns_patterns = self.kb_api.get_all_music_entities()
 
     def _get_stop_words(self):
         # Remove all keywords from stopwords
         stop_words = set(stopwords.words('english'))
-        for _, words in NLP.keywords.items():
+        stop_words |= NLP.extra_stopwords
+        for _, words in self.commands.items():
             for word in words:
                 try:
                     stop_words.remove(word)
@@ -55,11 +50,11 @@ class NLP:
     def _gen_patterns(self):
         # Generate RegEx patterns from keywords
         patterns = {}
-        for intent, keys in NLP.keywords.items():
+        for intent, keys in self.commands.items():
             patterns[intent] = re.compile('|'.join(keys))
         return patterns
 
-    def parse_input(self, msg):
+    def __call__(self, msg):
         # Identify the subject
         subject = ''
         for noun in self.db_nouns_patterns:
@@ -67,6 +62,12 @@ class NLP:
                 msg = msg.replace(noun.lower(), '')
                 subject = noun.strip()
                 break
+
+        # Remove punctuation from the string
+        msg = re.sub(r"[,.;@#?!&$']+\ *",
+                     " ",
+                     msg,
+                     flags=re.VERBOSE)
 
         # Clean the stopwords from the input.
         stop_words = self._get_stop_words()
