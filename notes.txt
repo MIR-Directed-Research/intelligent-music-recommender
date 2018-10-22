@@ -1,0 +1,37 @@
+Notes from Martin Suchanek
+
+-graph database
+-sql is easier to reason about, maybe start there
+-neo4j is a popular database (purpose built)
+
+-NLP find a library that already exists
+    - get a sense of input/output
+    - output
+    -seach for words that match
+
+    -dictionaries of verbs
+
+    mrtn@nrd.io
+
+resources:
+    NLP youtube video from Tyrel:
+        https://www.youtube.com/watch?v=-13yIXiyFAs
+
+
+Knowledge representation
+Tables:
+    3 types of tables:
+        1. nodes (pk autogen nodeId, entity name)
+        2. edges (source FK nodeId, dest fk node, relationship, value)
+        3. entity specific tables
+            - SongsTable(song name, genre, artist fk artist, length, popularity, date, ...)
+            - ArtistTable (artist name, born, died, popular time period, ...)
+
+Queries:
+    Play songs like despicito that are faster and more obscure
+        1. Get all edges with (source:despicito, similarity:ANY)
+        2. Find despicito in SongsTable using nodeId, get speed and popularity
+        3. SELECT * from 1. WHERE speed > despicito.speed AND popularity < despicito.popularity
+
+
+

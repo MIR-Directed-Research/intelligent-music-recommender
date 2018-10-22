@@ -32,12 +32,14 @@ class TestNLP(unittest.TestCase):
         self.assertEqual(str(output[1]), '')
 
     def test_parse_input_KB_API(self):
+        save_state = KnowledgeBaseAPI.get_all_music_entities
         KnowledgeBaseAPI.get_all_music_entities = MagicMock(return_value=['The Who'])
-        self.nlp = NLP(self.DB_path, self.keywords)  # Re-instantiate nlp so it uses the mock value.
-        output = self.nlp('play the who')
+        nlp = NLP(self.DB_path, self.keywords)  # Re-instantiate nlp so it uses the mock value.
+        output = nlp('play the who')
         self.assertEqual(str(output[0]), "['control_play']")
         self.assertEqual(str(output[1]), 'The Who')
         self.assertEqual(str(output[2]), '')
+        KnowledgeBaseAPI.get_all_music_entities = save_state
 
     def test_call_functional_test(self):
         output = self.nlp('play Justin bieber')
