@@ -55,12 +55,12 @@ class NLP:
         return patterns
 
     def __call__(self, msg):
-        # Identify the subject
-        subject = ''
+        # Identify the first subject from the database that matches.
+        db_subject = ''
         for noun in self.db_nouns_patterns:
             if noun.lower() in msg:
                 msg = msg.replace(noun.lower(), '')
-                subject = noun.strip()
+                db_subject = noun.strip()
                 break
 
         # Remove punctuation from the string
@@ -82,4 +82,6 @@ class NLP:
             if sub_msg != clean_msg:
                 intents.append(intent)
                 clean_msg = sub_msg
-        return intents, subject or clean_msg.strip()
+
+        remaining_words = clean_msg.strip()
+        return intents, db_subject, remaining_words

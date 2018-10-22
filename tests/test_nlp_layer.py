@@ -21,7 +21,9 @@ class TestNLP(unittest.TestCase):
         """Test that `control_play` intention is parsed."""
         output = self.nlp('play the clash')
         self.assertEqual(str(output[0]), "['control_play']")
-        self.assertEqual(str(output[1]), "clash")
+        self.assertEqual(str(output[1]), '')
+        self.assertEqual(str(output[2]), 'clash')
+
 
     def test_parse_input_query(self):
         output = self.nlp('Who is this artist')
@@ -34,6 +36,8 @@ class TestNLP(unittest.TestCase):
         output = self.nlp('play the who')
         self.assertEqual(str(output[0]), "['control_play']")
         self.assertEqual(str(output[1]), 'The Who')
+        self.assertEqual(str(output[2]), '')
+
 
 
 if __name__ == '__main__':
