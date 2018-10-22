@@ -56,11 +56,12 @@ class NLP:
 
     def __call__(self, msg):
         # Identify the first subject from the database that matches.
-        db_subject = ''
-        for noun in self.db_nouns_patterns:
-            if noun.lower() in msg:
-                msg = msg.replace(noun.lower(), '')
-                db_subject = noun.strip()
+        subject = ''
+        for noun in self.db_nouns:
+            if noun.lower() in msg.lower():
+                pattern = re.compile(noun, re.IGNORECASE)
+                msg = pattern.sub('', msg)
+                subject = noun.strip()
                 break
 
         # Remove punctuation from the string
