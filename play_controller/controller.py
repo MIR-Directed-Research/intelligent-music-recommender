@@ -12,11 +12,14 @@ class Controller:
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
 
     def __call__(self, raw_input):
-        command_lst, entity = self.nlp(raw_input)
+        command_lst, db_subject, remaining_words = self.nlp(raw_input)
         results = []
         for command in command_lst:
             func = commands.actions.get(command, commands.default)
-            print('Entity:\t\t{}'.format(entity if entity else 'NONE'), file=sys.stdout)
+            print('Entity:\t\t{}'.format(db_subject if db_subject else 'NONE'), file=sys.stdout)
             print('Command:\t{}'.format(command if command else 'NONE'), file=sys.stdout)
-            results.append(func(entity))
+            results.append(func(
+                db_subject=db_subject,
+                remaining_words=remaining_words
+            ))
         return results

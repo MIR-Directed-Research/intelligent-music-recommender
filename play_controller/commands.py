@@ -1,29 +1,29 @@
-def control_play(entity):
+def control_play(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
 
-def control_stop(entity):
+def control_stop(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
 
-def control_pause(entity):
+def control_pause(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
 
-def control_forward(entity):
+def control_forward(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
 
-def query_artist(entity):
+def query_artist(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
 
-def default(entity):
+def default(db_subject=None, remaining_words=None):
     # TODO: implement
     return 'Not implemented'
 
