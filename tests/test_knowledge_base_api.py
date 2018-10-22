@@ -53,6 +53,13 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
             "Expected to find Justin Timberlake as similar to Justin Bieber.",
         )
 
+    def test_get_all_music_entities(self):
+        res = self.kb_api.get_all_music_entities()
+        self.assertTrue(
+            'Justin Bieber' in res,
+            'Expected to find "Justin Bieber" in the list of entities.'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

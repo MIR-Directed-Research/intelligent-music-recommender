@@ -38,15 +38,14 @@ class KnowledgeBaseAPI:
                     cursor.execute("""
                         SELECT name
                         FROM nodes
-                        WHERE id in (
+                        WHERE id IN (
                             SELECT dest
-                            FROM edges join nodes on source == id
+                            FROM edges JOIN nodes ON source == id
                             WHERE name = (?) AND rel == "similar to"
                         );
                     """, (entity_name,))
                     return cursor.fetchall()
         return None
-
 
     def get_song_data(self, song_name):
         # Auto-close.
@@ -59,9 +58,9 @@ class KnowledgeBaseAPI:
                     SELECT song.name, artist.name
                     FROM (
                         SELECT name, main_artist_id
-                        FROM songs JOIN nodes on node_id == id
+                        FROM songs JOIN nodes ON node_id == id
                         WHERE name == (?)
-                    ) AS song JOIN nodes AS artist on main_artist_id == id;
+                    ) AS song JOIN nodes AS artist ON main_artist_id == id;
                     """, (song_name,))
                     return cursor.fetchone()
 
@@ -84,4 +83,4 @@ class KnowledgeBaseAPI:
                         SELECT name AS artist_name
                         FROM artists JOIN nodes ON node_id == id
                         """)
-                    return cursor.fetchone()
+                    return [x[0] for x in cursor.fetchall()]

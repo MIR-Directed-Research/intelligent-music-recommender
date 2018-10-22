@@ -33,7 +33,7 @@ class NLP:
 
         self.commands = keywords
         self.kb_api = KnowledgeBaseAPI(db_path)
-        self.db_nouns_patterns = self.kb_api.get_all_music_entities()
+        self.db_nouns = self.kb_api.get_all_music_entities()
 
     def _get_stop_words(self):
         # Remove all keywords from stopwords
@@ -56,11 +56,12 @@ class NLP:
 
     def __call__(self, msg):
         # Identify the first subject from the database that matches.
-        db_subject = ''
-        for noun in self.db_nouns_patterns:
-            if noun.lower() in msg:
-                msg = msg.replace(noun.lower(), '')
-                db_subject = noun.strip()
+        subject = ''
+        for noun in self.db_nouns:
+            if noun.lower() in msg.lower():
+                pattern = re.compile(noun, re.IGNORECASE)
+                msg = pattern.sub('', msg)
+                subject = noun.strip()
                 break
 
         # Remove punctuation from the string
@@ -83,5 +84,5 @@ class NLP:
                 intents.append(intent)
                 clean_msg = sub_msg
 
-        remaining_words = clean_msg.strip()
-        return intents, db_subject, remaining_words
+        remaining_text = clean_msg.strip()
+        return intents, subject, remaining_text

@@ -15,11 +15,16 @@ class TestPlayController(unittest.TestCase):
         self.controller = Controller(db_path=self.DB_path)
 
     def test_call(self):
-        # TODO: update once command funcs are implemented.
+        save_state = KnowledgeBaseAPI.get_all_music_entities
         KnowledgeBaseAPI.get_all_music_entities = MagicMock(return_value=['The Who'])
-        self.controller = Controller(db_path=self.DB_path)
-        result = self.controller('play despicito')
-        self.assertEqual(result, ['Not implemented'])
+        controller = Controller(db_path=self.DB_path)
+        result = controller('play test')
+        self.assertEqual(result, ["Sorry, I don't understand"])
+        KnowledgeBaseAPI.get_all_music_entities = save_state
+
+    def test_call_functional_test(self):
+        result = self.controller('play justin bieber')
+        self.assertEqual(result, ["Playing Justin Bieber"])
 
 
 if __name__ == '__main__':
