@@ -27,7 +27,19 @@ class Interactions:
 
     def control_play(self, db_subject=None, remaining_text=None):
         # TODO: implement
-        return 'Not implemented'
+        if db_subject:
+            """
+            TODO: 
+                - query db for entity
+                    - if it's of type song, play it
+                    - if it's anything else, get the songs associated with 
+                      it and play in DESC order                      
+            """
+            return 'Playing {}'.format(db_subject)
+        elif remaining_text:
+            return "Sorry, I don't understand"
+        else:
+            return 'Resume playing current song'
 
     def control_stop(self, db_subject=None, remaining_text=None):
         # TODO: implement

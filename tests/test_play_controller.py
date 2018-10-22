@@ -21,6 +21,10 @@ class TestPlayController(unittest.TestCase):
         result = self.controller('play despicito')
         self.assertEqual(result, ['Not implemented'])
 
+        def test_call_functional_test(self):
+            result = self.controller('play justin bieber')
+            self.assertEqual(result, ["Playing Justin Bieber"])
+
 
 if __name__ == '__main__':
     unittest.main()
