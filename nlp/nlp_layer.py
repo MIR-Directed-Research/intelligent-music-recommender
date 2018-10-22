@@ -33,7 +33,7 @@ class NLP:
 
         self.commands = keywords
         self.kb_api = KnowledgeBaseAPI(db_path)
-        self.db_nouns_patterns = self.kb_api.get_all_music_entities()
+        self.db_nouns = self.kb_api.get_all_music_entities()
 
     def _get_stop_words(self):
         # Remove all keywords from stopwords
