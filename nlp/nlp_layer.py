@@ -83,5 +83,5 @@ class NLP:
                 intents.append(intent)
                 clean_msg = sub_msg
 
-        remaining_words = clean_msg.strip()
-        return intents, db_subject, remaining_words
+        remaining_text = clean_msg.strip()
+        return intents, subject, remaining_text
