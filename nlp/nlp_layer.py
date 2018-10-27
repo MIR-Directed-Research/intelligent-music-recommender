@@ -54,15 +54,14 @@ class NLP:
             patterns[intent] = re.compile('|'.join(keys))
         return patterns
 
-    def __call__(self, msg):
+    def __call__(self, msg: str):
         # Identify the first subject from the database that matches.
-        subject = ''
+        subjects = []
         for noun in self.db_nouns:
             if noun.lower() in msg.lower():
                 pattern = re.compile(noun, re.IGNORECASE)
                 msg = pattern.sub('', msg)
-                subject = noun.strip()
-                break
+                subjects.append(noun.strip())
 
         # Remove punctuation from the string
         msg = re.sub(r"[,.;@#?!&$']+\ *",
@@ -85,4 +84,4 @@ class NLP:
                 clean_msg = sub_msg
 
         remaining_text = clean_msg.strip()
-        return intents, subject, remaining_text
+        return intents, subjects, remaining_text
