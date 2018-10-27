@@ -24,7 +24,8 @@ CREATE TABLE edges(
     source int REFERENCES nodes(id),
     dest int REFERENCES nodes(id),
     rel varchar(40) REFERENCES relations(type),
-    percentage_score real
+    score real CHECK (score >= 0 AND score <= 100),
+    PRIMARY KEY (source, dest, rel)
 );
 
 -- TODO: Create trigger functions to add to nodes + edges table

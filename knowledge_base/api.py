@@ -17,7 +17,10 @@ class KnowledgeBaseAPI:
 
     @property
     def connection(self):
-        return sqlite3.connect(self.dbName)
+        conn = sqlite3.connect(self.dbName)
+        # enable foreign key constraints
+        conn.execute("PRAGMA foreign_keys = 1")
+        return conn
 
     def get_similar_entities(self, entity_name):
         """ Finds all entities similar to a given entity.
@@ -84,3 +87,88 @@ class KnowledgeBaseAPI:
                         FROM artists JOIN nodes ON node_id == id
                         """)
                     return [x[0] for x in cursor.fetchall()]
+
+    def _get_matching_node_ids(self, node_name):
+        """Retrieves IDs of all node matching the given name.
+
+        Params:
+            node_name (string): name of entity node. E.g. "Justin Bieber".
+
+        Returns:
+            (list of ints): ids of nodes corresponding to given name; empty if none found.
+        """
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            SELECT id
+                            FROM nodes
+                            WHERE name == (?)
+                        """, (node_name,))
+                        res = cursor.fetchall()
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: An error occurred when retrieving node ids: {}".format(e))
+
+        if len(res) == 0:
+            print("ERROR: Could not find node ID for name '{0}'.".format(node_name))
+            return []
+
+        elif len(res) > 1:
+            print("Found multiple node IDs for name '{0}', returning first result.".format(node_name))
+
+        # e.g. [(10,), (11,)] => [10, 11]
+        return [x[0] for x in res]
+
+    def connect_entities(self, source_node_name, dest_node_name, rel_str, score):
+        """Inserts edge row into edges table.
+
+        Params:
+            source_node_name (string): Node name of entity with the outgoing edge.
+                E.g. "Justin Bieber"; "Despacito"; "Pop"; etc.
+
+            dest_node_name (string): Node name of entity with the incoming edge.
+                E.g. "Shawn Mendes"; "In My Blood"; "Pop"; etc.
+
+            rel_str (string): Type of relationship, which must be already present in 'relations' table.
+                E.g. "similar to".
+
+            score (int): edge weight corresponding to percentage, must be [0,100] range.
+
+        Returns:
+            (bool): False if error occurred, True otherwise.
+        """
+        candidate_source_ids = self._get_matching_node_ids(source_node_name)
+        candidate_dest_ids = self._get_matching_node_ids(dest_node_name)
+        if len(candidate_source_ids) != 1 or len(candidate_dest_ids) != 1:
+            print("ERROR: Could not find unique match for entities '{}', '{}'. Found {}, {} matches respectively" .format(
+                source_node_name,
+                dest_node_name,
+                len(candidate_source_ids),
+                len(candidate_dest_ids)),
+            )
+            return False
+
+        source_node_id, dest_node_id = candidate_source_ids[0], candidate_dest_ids[0]
+
+        try:
+            with closing(self.connection) as conn:
+                with conn:
+                    with closing(conn.cursor()) as cursor:
+                        cursor.execute("""
+                            INSERT INTO edges (source, dest, rel, score)
+                            VALUES (?, ?, ?, ?)
+                        """, (source_node_id, dest_node_id, rel_str, score))
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not connect entities '{0}' and '{1}': {2}".format(
+                source_node_name, dest_node_name, str(e)))
+            return False
+
+        except sqlite3.IntegrityError as e:
+            print("ERROR: Could not connect entities '{0}' and '{1}' due to schema constraints: {2}".format(
+                source_node_name, dest_node_name, str(e)))
+            return False
+
+        return True

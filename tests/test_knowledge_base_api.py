@@ -60,6 +60,17 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
             'Expected to find "Justin Bieber" in the list of entities.'
         )
 
+    def test_connect_entities(self):
+        res = self.kb_api.get_similar_entities("Shawn Mendes")
+        self.assertEqual(len(res), 0)
+
+        res = self.kb_api.connect_entities("Shawn Mendes", "Justin Timberlake", "similar to", 0)
+        self.assertEqual(res, True, "")
+
+        res = self.kb_api.get_similar_entities("Shawn Mendes")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0][0], "Justin Timberlake")
+
 
 if __name__ == '__main__':
     unittest.main()
