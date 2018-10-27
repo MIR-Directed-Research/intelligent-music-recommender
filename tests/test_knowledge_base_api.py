@@ -25,13 +25,13 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
 
     def test_get_song_data_dne(self):
         res = self.kb_api.get_song_data("Not In Database")
-        self.assertTrue(res is None, "Expected 'None' result for queried song not in DB.")
+        self.assertEqual(res, None, "Expected 'None' result for queried song not in DB.")
 
     def test_find_similar_song(self):
         res = self.kb_api.get_similar_entities("Despacito")
         self.assertEqual(
             len(res), 1,
-            "Expected only one song similar to \"Despacito\".",
+            "Expected only one song similar to \"Despacito\". Found {0}".format(res),
         )
         self.assertEqual(
             res[0], "Rock Your Body",
@@ -60,6 +60,10 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
             'Expected to find "Justin Bieber" in the list of entities.'
         )
 
+    def test_find_similar_to_entity_that_dne(self):
+        res = self.kb_api.get_similar_entities("Unknown Entity")
+        self.assertEqual(res, [])
+
     def test_connect_entities(self):
         res = self.kb_api.get_similar_entities("Shawn Mendes")
         self.assertEqual(len(res), 0)
@@ -69,7 +73,7 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
 
         res = self.kb_api.get_similar_entities("Shawn Mendes")
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0][0], "Justin Timberlake")
+        self.assertEqual(res[0], "Justin Timberlake")
 
 
 if __name__ == '__main__':

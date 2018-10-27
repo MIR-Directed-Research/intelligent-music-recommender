@@ -30,42 +30,51 @@ class KnowledgeBaseAPI:
         Params:
             entity_name (string): name of entity (e.g. "Justin Bieber").
         Returns:
-            (list of 1-tuples): names of entities related to given entity.
-            e.g. [("Justin Timberlake",), ("Shawn Mendes",)]
+            (list of strings): names of entities related to given entity.
+            e.g. ["Justin Timberlake", "Shawn Mendes"]
         """
-        with closing(self.connection) as con:
-            # Auto-commit
-            with con:
-                with closing(con.cursor()) as cursor:
-                    # Inner query retrieves IDs of all similar entities
-                    cursor.execute("""
-                        SELECT name
-                        FROM nodes
-                        WHERE id IN (
-                            SELECT dest
-                            FROM edges JOIN nodes ON source == id
-                            WHERE name = (?) AND rel == "similar to"
-                        );
-                    """, (entity_name,))
-                    return [x[0] for x in cursor.fetchall()]
-        return None
+        try:
+            with closing(self.connection) as con:
+                # Auto-commit
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        # Inner query retrieves IDs of all similar entities
+                        cursor.execute("""
+                            SELECT name
+                            FROM nodes
+                            WHERE id IN (
+                                SELECT dest
+                                FROM edges JOIN nodes ON source == id
+                                WHERE name = (?) AND rel == "similar to"
+                            );
+                        """, (entity_name,))
+                        # [("Justin Timberlake",), ("Shawn Mendes",)] => ["Justin Timberlake", "Shawn Mendes"]
+                        return [x[0] for x in cursor.fetchall()]
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not find entities similar to entity with name '{}': {}".format(entity_name, str(e)))
+            return None
 
     def get_song_data(self, song_name):
-        # Auto-close.
-        with closing(self.connection) as con:
-            # Auto-commit
-            with con:
-                # Auto-close.
-                with closing(con.cursor()) as cursor:
-                    cursor.execute("""
-                    SELECT song.name, artist.name
-                    FROM (
-                        SELECT name, main_artist_id
-                        FROM songs JOIN nodes ON node_id == id
-                        WHERE name == (?)
-                    ) AS song JOIN nodes AS artist ON main_artist_id == id;
-                    """, (song_name,))
-                    return cursor.fetchone()
+        try:
+            # Auto-close.
+            with closing(self.connection) as con:
+                # Auto-commit
+                with con:
+                    # Auto-close.
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                        SELECT song.name, artist.name
+                        FROM (
+                            SELECT name, main_artist_id
+                            FROM songs JOIN nodes ON node_id == id
+                            WHERE name == (?)
+                        ) AS song JOIN nodes AS artist ON main_artist_id == id;
+                        """, (song_name,))
+                        return cursor.fetchone()
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not retrieve data for song with name '{}': {}".format(song_name, str(e)))
+            return None
 
     def get_all_music_entities(self):
         """Gets a list of all the names, genres,
@@ -73,20 +82,23 @@ class KnowledgeBaseAPI:
 
         :return: A list of all nouns in the database
         """
-        # Auto-close.
-        with closing(self.connection) as con:
-            # Auto-commit
-            with con:
-                # Auto-close.
-                with closing(con.cursor()) as cursor:
-                    cursor.execute("""
-                        SELECT name AS song_name
-                        FROM songs JOIN nodes ON node_id == id
-                        UNION
-                        SELECT name AS artist_name
-                        FROM artists JOIN nodes ON node_id == id
-                        """)
-                    return [x[0] for x in cursor.fetchall()]
+        try:
+            # Auto-close.
+            with closing(self.connection) as con:
+                # Auto-commit
+                with con:
+                    # Auto-close.
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            SELECT name AS song_name
+                            FROM songs JOIN nodes ON node_id == id
+                            UNION
+                            SELECT name AS artist_name
+                            FROM artists JOIN nodes ON node_id == id
+                            """)
+                        return [x[0] for x in cursor.fetchall()]
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not retrieve music entities: {}".format(e))
 
     def _get_matching_node_ids(self, node_name):
         """Retrieves IDs of all node matching the given name.
