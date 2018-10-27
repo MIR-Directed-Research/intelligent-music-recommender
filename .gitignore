@@ -109,3 +109,9 @@ venv.bak/
 # etc
 .idea
 *.iml
+
+pycharm-debug.egg
+pycharm-debug-py3k.egg
+notes.txt
+nlp_junk.py
+
