@@ -9,7 +9,7 @@ class Interactions:
     @property
     def intents(self):
         return {
-            'control_play': (['start', 'play '], self.control_play),
+            'control_play': (['start', 'play'], self.control_play),
             'control_stop': (['stop'], self.control_stop),
             'control_pause': (['pause'], self.control_pause),
             'control_forward': (['skip', 'next'], self.control_forward),
