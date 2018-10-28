@@ -5,7 +5,7 @@ from knowledge_base.api import KnowledgeBaseAPI
 from nlp.nlp_layer import NLP
 
 
-class UIConnector:
+class SystemEntry:
     """This class serves as the interface through which
     a UI can send user-input to the system.
 
@@ -18,7 +18,9 @@ class UIConnector:
         self.nlp = NLP(self.DB_path, self.interactions.keywords)
 
     def __call__(self, raw_input: str):
-        """Call this function with a string of the user's
+        """The system's entrypoint.
+
+        Call this function with a string of raw user-
         input.
 
         Args:

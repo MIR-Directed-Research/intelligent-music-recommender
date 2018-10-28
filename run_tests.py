@@ -9,7 +9,7 @@ To run the tests:
 """
 from tests.test_nlp_layer import TestNLP
 from tests.test_knowledge_base_api import TestMusicKnowledgeBaseAPI
-from tests.test_play_controller import TestUIConnector
+from tests.test_system_entry import TestSystemEntry
 
 if __name__ == '__main__':
     unittest.main()

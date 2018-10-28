@@ -19,10 +19,11 @@ import sys
 from player_controller.dummy_controller import DummyController
 
 sys.path.append('../')
-from ui_connector.uiconnector import UIConnector
+from system_entry.system_entry import SystemEntry
 
 db_path = '../tests/test.db'
 player_controller = DummyController()
-ui_connector = UIConnector(db_path, player_controller)
+system_entry = SystemEntry(db_path, player_controller)
 for text in sys.stdin:
-    ui_connector(text)
+    import pydevd; pydevd.settrace('localhost', port=8081, stdoutToServer=True, stderrToServer=True)
+    system_entry(text)
