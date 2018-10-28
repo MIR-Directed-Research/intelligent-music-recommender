@@ -12,7 +12,7 @@ class Interactions:
     signifiers of user's intent, along with the functions
     that they map to.
 
-    This class also contains a function that corresponds to
+    This class also contains the functions that corresponds to
     each of the possible user interactions.
 
     """
@@ -47,7 +47,7 @@ class Interactions:
 
         # Call the highest precedence command.
         self._next_operation(subjects=subjects,
-                             commands=commands,
+                             commands=sorted_commands,
                              remaining_text=remaining_text,
                              )
 
@@ -66,12 +66,12 @@ class Interactions:
 
         """
         return OrderedDict([
-            ('control_play', (['start', 'play'], self._control_play)),
             ('control_stop', (['stop'], self._control_stop)),
             ('control_pause', (['pause'], self._control_pause)),
-            ('control_forward', (['skip', 'next'], self._control_forward)),
-            ('query_artist', (['who', 'artist'], self._query_artist)),
+            ('control_forward', (['skip', 'next'], self._control_skip)),
             ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
+            ('control_play', (['start', 'play'], self._control_play)),
+            ('query_artist', (['who', 'artist'], self._query_artist)),
             ('default', ([''], self._default)),
         ])
 
@@ -91,6 +91,7 @@ class Interactions:
                       subjects: List[str] = None,
                       commands: List[str] = None,
                       remaining_text: str = None,
+                      response_msg: str = None,
                       ):
         """Terminal command. Plays the subjects specified.
 
@@ -102,79 +103,86 @@ class Interactions:
 
         """
         if subjects:
-
             self.player.play(subjects)
         elif remaining_text:
             self.player.respond("Sorry, I don't understand")
         else:
-            self.player.respond('Resume playing current song')
+            self.player.respond('Resuming the current song')
 
     def _control_stop(self,
                       subjects: List[str] = None,
                       commands: List[str] = None,
                       remaining_text: str = None,
+                      response_msg: str = None,
                       ):
-        # TODO: implement
-        return 'Not implemented'
+        self.player.stop(subjects)
 
     def _control_pause(self,
                        subjects: List[str] = None,
                        commands: List[str] = None,
                        remaining_text: str = None,
+                       response_msg: str = None,
                        ):
-        # TODO: implement
-        return 'Not implemented'
+        self.player.pause(subjects)
 
-    def _control_forward(self,
-                         subjects: List[str] = None,
-                         commands: List[str] = None,
-                         remaining_text: str = None,
-                         ):
-        # TODO: implement
-        return 'Not implemented'
+    def _control_skip(self,
+                      subjects: List[str] = None,
+                      commands: List[str] = None,
+                      remaining_text: str = None,
+                      response_msg: str = None,
+                      ):
+        # TODO: Add number parsing for "skip forward 2 songs".
+        self.player.skip(subjects)
 
     def _query_artist(self,
                       subjects: List[str] = None,
                       commands: List[str] = None,
                       remaining_text: str = None,
+                      response_msg: str = None,
                       ):
-        # TODO: implement
-        return 'Not implemented'
+        # TODO: implement for
+        self.player.respond(subjects)
 
     def _query_similar_entities(self,
                                 subjects: List[str] = None,
                                 commands: List[str] = None,
                                 remaining_text: str = None,
+                                response_msg: str = None,
                                 ):
-        # TODO: implement
-        return 'Not implemented'
+        similar_entities = []
+        for e in subjects:
+            similar_entities += self.kb_api.get_similar_entities(e)
+
+        if not similar_entities:
+            self.player.respond("I'm sorry, I couldn't find anything for you.")
+        else:
+            self._next_operation(subjects=similar_entities,
+                                 commands=commands,
+                                 remaining_text=remaining_text,
+                                 response_msg=response_msg,
+                                 )
 
     def _default(self,
                  subjects: List[str] = None,
                  commands: List[str] = None,
                  remaining_text: str = None,
+                 response_msg: str = None,
                  ):
-        # TODO: implement
-        return 'Not implemented'
+        self.player.respond("I'm sorry, I couldn't find anything for you.")
 
     def _next_operation(self,
                         subjects: List[str] = None,
                         commands: List[str] = None,
                         remaining_text: str = None,
+                        response_msg: str = None,
                         ):
         """Calls the next function in the commands parameter.
 
-        Args:
-            subjects:
-            commands:
-            remaining_text:
-
-        Returns:
-
         """
-        next_command_name = commands.pop(0)
+        next_command_name = commands.pop(0) if commands else self._default
         next_func = self.actions.get(next_command_name, self._default)
         next_func(subjects=subjects,
                   commands=commands,
                   remaining_text=remaining_text,
+                  response_msg=response_msg,
                   )
