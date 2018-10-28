@@ -1,8 +1,18 @@
 """
-Run this script from within the /bin directory:
+This is an executable script that serves as a
+CLI for interacting with the system.
 
-cd bin/
-python3 cli
+Execution:
+    cd bin/
+    python3 cli
+
+Example sentences:
+        "Play Despacito"
+        "Play some jazz music"
+        "Play some faster music"
+        "Who is the the saxophone player?
+        "Play her top songs"
+
 """
 import sys
 

@@ -2,6 +2,13 @@ from time import sleep
 
 
 class DummyController:
+    """A dummy player-controller for testing the system.
+
+    This will eventually be replaced with a controller
+    that calls the functions of a real player.
+
+    """
+
     def __init__(self):
         self.sleep_time = 0.10
 

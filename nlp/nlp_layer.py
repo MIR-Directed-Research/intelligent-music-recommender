@@ -9,14 +9,6 @@ from knowledge_base.api import KnowledgeBaseAPI
 class NLP:
     """
     This layer stores the NLP specific tooling and logic.
-    It primarily interacts with the query engine.
-
-    Example sentences:
-        "Play Desposito"
-        "Play some jazz music"
-        "Play some faster music"
-        "Who is the the saxophone player?
-        "Play her top songs"
 
     References:
         https://stackoverflow.com/questions/42322902/how-to-get-parse-tree-using-python-nltk

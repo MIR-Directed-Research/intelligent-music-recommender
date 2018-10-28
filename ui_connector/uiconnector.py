@@ -6,15 +6,27 @@ from nlp.nlp_layer import NLP
 
 
 class UIConnector:
+    """This class serves as the interface through which
+    a UI can send user-input to the system.
+
+    """
+
     def __init__(self, db_path, player_controller):
         self.DB_path = db_path
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
         self.interactions = Interactions(self.DB_path, player_controller)
         self.nlp = NLP(self.DB_path, self.interactions.keywords)
 
-    def __call__(self, raw_input):
+    def __call__(self, raw_input: str):
+        """Call this function with a string of the user's
+        input.
+
+        Args:
+            raw_input: User input.
+
+        """
         commands, subjects, remaining_text = self.nlp(raw_input)
-        results = []
+        # TODO: Change these stderr outputs to logging.
         print('Matching DB Entities:\t{}'.format(subjects if subjects else 'NONE'), file=sys.stderr)
         print('Remaining Text:\t\t\t{}'.format(remaining_text if remaining_text else 'NONE'), file=sys.stderr)
         print('Commands:\t\t\t\t{}'.format(commands if commands else 'NONE'), file=sys.stderr)
@@ -22,4 +34,3 @@ class UIConnector:
                           commands=commands,
                           remaining_text=remaining_text,
                           )
-        return results

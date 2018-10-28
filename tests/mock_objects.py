@@ -1,4 +1,11 @@
 class MockController:
+    """Mocks a player controller for testing.
+
+    Allows a test to access the output the caller through
+    exploiting pass-by-reference of the `state` dictionary.
+
+    """
+
     def __init__(self, state: dict):
         self.state = state
 

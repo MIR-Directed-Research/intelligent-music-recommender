@@ -5,6 +5,18 @@ from knowledge_base.api import KnowledgeBaseAPI
 
 
 class Interactions:
+    """This class stores the possible interactions between the
+    user and the system, and the logic to act on them.
+
+    The `intents` property contains a mapping that stores
+    signifiers of user's intent, along with the functions
+    that they map to.
+
+    This class also contains a function that corresponds to
+    each of the possible user interactions.
+
+    """
+
     def __init__(self, db_path, player_controller):
         self.player = player_controller
         self.DB_path = db_path
@@ -15,7 +27,9 @@ class Interactions:
                  commands: List[str] = None,
                  remaining_text: str = None,
                  ):
-        """Initiates a chain-of-commands to act on the subject parameters.
+        """Initiates a sequence of commands that will act
+        on the subject parameters in order of command
+        precedence.
 
         Args:
             subjects: List of subjects in the database.
@@ -32,20 +46,22 @@ class Interactions:
                 sorted_commands.append(c)
 
         # Call the highest precedence command.
-        return self._next_operation(subjects=subjects,
-                                    commands=commands,
-                                    remaining_text=remaining_text,
-                                    )
+        self._next_operation(subjects=subjects,
+                             commands=commands,
+                             remaining_text=remaining_text,
+                             )
 
     @property
     def intents(self):
-        """Returns mapping of `intentions`, their corresponding `signifiers`,
-        and function handlers.
+        """Returns a mapping that stores signifiers of user's
+        intent, along with the `commands` and the functions
+        that they map to.
 
         The ordering of these commands matters, as it is used to
         store the precedence of operations.
 
-        Returns (OrderedDict): Mappings of intentions, signifiers, and
+        Returns (OrderedDict): A mapping of intentions, their
+            corresponding signifiers (as keywords), and function
             handlers.
 
         """
