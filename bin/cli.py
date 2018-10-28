@@ -5,14 +5,14 @@ cd bin/
 python3 cli
 """
 import sys
-from time import sleep
+
+from player_controller.dummy_controller import DummyController
 
 sys.path.append('../')
-from play_controller.controller import Controller
+from ui_connector.uiconnector import UIConnector
 
-DB_PATH = '../tests/test.db'
-controller = Controller(DB_PATH)
+db_path = '../tests/test.db'
+player_controller = DummyController()
+ui_connector = UIConnector(db_path, player_controller)
 for text in sys.stdin:
-    for result in controller(text):
-        sleep(0.05)
-        print('Result: {}'.format(result))
+    ui_connector(text)
