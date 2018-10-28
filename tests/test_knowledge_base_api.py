@@ -34,7 +34,7 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
             "Expected only one song similar to \"Despacito\".",
         )
         self.assertEqual(
-            res[0][0], "Rock Your Body",
+            res[0], "Rock Your Body",
             "Expected to find \"Rock Your Body\" as similar to \"Despacito\".",
         )
 
@@ -45,11 +45,11 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
             "Expected exactly two artists similar to Justin Bieber.",
         )
         self.assertEqual(
-            res[0][0], "Justin Timberlake",
+            res[0], "Justin Timberlake",
             "Expected to find Justin Timberlake as similar to Justin Bieber.",
         )
         self.assertEqual(
-            res[1][0], "Shawn Mendes",
+            res[1], "Shawn Mendes",
             "Expected to find Justin Timberlake as similar to Justin Bieber.",
         )
 
