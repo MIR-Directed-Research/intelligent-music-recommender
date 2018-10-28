@@ -9,14 +9,6 @@ from knowledge_base.api import KnowledgeBaseAPI
 class NLP:
     """
     This layer stores the NLP specific tooling and logic.
-    It primarily interacts with the query engine.
-
-    Example sentences:
-        "Play Desposito"
-        "Play some jazz music"
-        "Play some faster music"
-        "Who is the the saxophone player?
-        "Play her top songs"
 
     References:
         https://stackoverflow.com/questions/42322902/how-to-get-parse-tree-using-python-nltk
@@ -54,15 +46,14 @@ class NLP:
             patterns[intent] = re.compile('|'.join(keys))
         return patterns
 
-    def __call__(self, msg):
+    def __call__(self, msg: str):
         # Identify the first subject from the database that matches.
-        subject = ''
+        subjects = []
         for noun in self.db_nouns:
             if noun.lower() in msg.lower():
                 pattern = re.compile(noun, re.IGNORECASE)
                 msg = pattern.sub('', msg)
-                subject = noun.strip()
-                break
+                subjects.append(noun.strip())
 
         # Remove punctuation from the string
         msg = re.sub(r"[,.;@#?!&$']+\ *",
@@ -85,4 +76,4 @@ class NLP:
                 clean_msg = sub_msg
 
         remaining_text = clean_msg.strip()
-        return intents, subject, remaining_text
+        return intents, subjects, remaining_text

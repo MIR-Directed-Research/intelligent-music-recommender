@@ -44,7 +44,7 @@ class KnowledgeBaseAPI:
                             WHERE name = (?) AND rel == "similar to"
                         );
                     """, (entity_name,))
-                    return cursor.fetchall()
+                    return [x[0] for x in cursor.fetchall()]
         return None
 
     def get_song_data(self, song_name):
