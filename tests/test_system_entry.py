@@ -26,8 +26,12 @@ class TestSystemEntry(unittest.TestCase):
                                  player_controller=self.player_controller,
                                  )
         controller('play test')
-        self.assertEqual(self.results_dict['respond'], "Sorry, I don't understand")
-        KnowledgeBaseAPI.get_all_music_entities = save_state
+        try:
+            self.assertEqual(self.results_dict['respond'], "I'm sorry, I couldn't find that for you.")
+        except Exception as e:
+            raise e
+        finally:
+            KnowledgeBaseAPI.get_all_music_entities = save_state
 
     def test_call_functional_test(self):
         self.results_dict['play'] = None
