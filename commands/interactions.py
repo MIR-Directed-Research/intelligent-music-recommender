@@ -66,6 +66,7 @@ class Interactions:
 
         """
         return OrderedDict([
+            ('query_commands', (['hi', 'how', 'hello'], self._query_commands)),
             ('control_stop', (['stop'], self._control_stop)),
             ('control_pause', (['pause'], self._control_pause)),
             ('control_forward', (['skip', 'next'], self._control_skip)),
@@ -87,6 +88,24 @@ class Interactions:
     def command_precedence(self):
         return [k for k, v in self.intents.items()]
 
+    def _query_commands(self,
+                        subjects: List[str] = None,
+                        commands: List[str] = None,
+                        remaining_text: str = None,
+                        response_msg: str = None,
+                        ):
+        """Terminal command. Reports on possible commands and interactions.
+
+        """
+        if subjects:
+            # Handle question about specific `subjects`.
+            self.player.respond("I'm sorry, I can't answer that one")
+        else:
+            # Handle genery inquiries.
+            self.player.respond("Hi there! Ask me to play artists or songs. "
+                                "I can also find songs that are similar to other "
+                                "artists.")
+
     def _control_play(self,
                       subjects: List[str] = None,
                       commands: List[str] = None,
@@ -105,7 +124,7 @@ class Interactions:
         if subjects:
             self.player.play(subjects)
         elif remaining_text:
-            self.player.respond("Sorry, I don't understand")
+            self.player.respond("I'm sorry, I couldn't find that for you.")
         else:
             self.player.respond('Resuming the current song')
 
@@ -140,7 +159,7 @@ class Interactions:
                       remaining_text: str = None,
                       response_msg: str = None,
                       ):
-        # TODO: implement for
+        # TODO: implement for fetching current state, ie "who is this artist?"
         self.player.respond(subjects)
 
     def _query_similar_entities(self,
@@ -154,7 +173,7 @@ class Interactions:
             similar_entities += self.kb_api.get_similar_entities(e)
 
         if not similar_entities:
-            self.player.respond("I'm sorry, I couldn't find anything for you.")
+            self.player.respond("I'm sorry, I couldn't find that for you.")
         else:
             self._next_operation(subjects=similar_entities,
                                  commands=commands,
@@ -168,7 +187,7 @@ class Interactions:
                  remaining_text: str = None,
                  response_msg: str = None,
                  ):
-        self.player.respond("I'm sorry, I couldn't find anything for you.")
+        self.player.respond("I'm sorry, I don't understand.")
 
     def _next_operation(self,
                         subjects: List[str] = None,

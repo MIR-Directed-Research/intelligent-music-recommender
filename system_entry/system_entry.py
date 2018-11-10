@@ -29,9 +29,9 @@ class SystemEntry:
         """
         commands, subjects, remaining_text = self.nlp(raw_input)
         # TODO: Change these stderr outputs to logging.
-        print('Matching DB Entities:\t{}'.format(subjects if subjects else 'NONE'), file=sys.stderr)
-        print('Remaining Text:\t\t\t{}'.format(remaining_text if remaining_text else 'NONE'), file=sys.stderr)
-        print('Commands:\t\t\t\t{}'.format(commands if commands else 'NONE'), file=sys.stderr)
+        # print('Matching DB Entities:\t{}'.format(subjects if subjects else 'NONE'), file=sys.stderr)
+        # print('Remaining Text:\t\t\t{}'.format(remaining_text if remaining_text else 'NONE'), file=sys.stderr)
+        # print('Commands:\t\t\t\t{}'.format(commands if commands else 'NONE'), file=sys.stderr)
         self.interactions(subjects=subjects,
                           commands=commands,
                           remaining_text=remaining_text,
