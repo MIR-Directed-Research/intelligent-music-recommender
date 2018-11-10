@@ -16,10 +16,10 @@ Example sentences:
 """
 import sys
 
-from player_controller.dummy_controller import DummyController
+from player_adaptor.dummy_adaptor import DummyController
 
 sys.path.append('../')
-from system_entry.system_entry import SystemEntry
+from controller.system_entry import SystemEntry
 
 db_path = '../tests/test.db'
 player_controller = DummyController()
