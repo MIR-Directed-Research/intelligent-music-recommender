@@ -1,7 +1,9 @@
 from time import sleep
 
+from player_adaptor.abstract_base_adaptor import AbstractBaseAdaptor
 
-class DummyController:
+
+class DummyController(AbstractBaseAdaptor):
     """A dummy player-controller for testing the system.
 
     This will eventually be replaced with a controller
