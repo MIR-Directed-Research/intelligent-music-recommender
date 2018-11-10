@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from knowledge_base.api import KnowledgeBaseAPI
-from system_entry.system_entry import SystemEntry
+from controller.system_entry import SystemEntry
 from tests.mock_objects import MockController
 
 

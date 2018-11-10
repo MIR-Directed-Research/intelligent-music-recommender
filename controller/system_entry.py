@@ -1,6 +1,6 @@
 import sys
 
-from commands.interactions import Interactions
+from command_evaluation.eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
 from nlp.nlp_layer import NLP
 
@@ -14,7 +14,7 @@ class SystemEntry:
     def __init__(self, db_path, player_controller):
         self.DB_path = db_path
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
-        self.interactions = Interactions(self.DB_path, player_controller)
+        self.interactions = EvalEngine(self.DB_path, player_controller)
         self.nlp = NLP(self.DB_path, self.interactions.keywords)
 
     def __call__(self, raw_input: str):

@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import MagicMock
 
-from commands.interactions import Interactions
+from command_evaluation.eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
 from nlp.nlp_layer import NLP
 from tests.mock_objects import MockController
@@ -18,7 +18,7 @@ class TestNLP(unittest.TestCase):
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
         self.results_dict = {}
         self.player_controller = MockController(self.results_dict)
-        self.interactions = Interactions(self.DB_path, self.player_controller)
+        self.interactions = EvalEngine(self.DB_path, self.player_controller)
         self.nlp = NLP(self.DB_path, self.interactions.keywords)
         self.keywords = self.interactions.keywords
 
