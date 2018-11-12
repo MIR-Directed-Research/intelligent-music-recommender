@@ -75,6 +75,13 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0], "Justin Timberlake")
 
+    def test_rejects_connect_ambiguous_entities(self):
+        res = self.kb_api.add_artist("Artist and Song name clash")
+        res = self.kb_api.add_song("Artist and Song name clash", "U2")
+
+        res = self.kb_api.connect_entities("Artist and Song name clash", "Justin Timberlake", "similar to", 0)
+        self.assertEqual(res, False, "")
+
     def test_add_artist(self):
         res = self.kb_api.add_artist("Heart")
         self.assertEqual(res, True, "Failed to add artist 'Heart' to knowledge base.")
