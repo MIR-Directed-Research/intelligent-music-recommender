@@ -8,8 +8,9 @@ CREATE TABLE nodes(
     -- e.g. "song", "artist", "genre", etc.
     type varchar(50),
 
-    -- TODO: create surrogate key
-    id int PRIMARY KEY
+    -- NOTE: this field is an alias for SQLite's "row_id" column
+    -- Setting this column to NULL at insert, will automatically populate it
+    id INTEGER PRIMARY KEY
 );
 
 CREATE TABLE relations(

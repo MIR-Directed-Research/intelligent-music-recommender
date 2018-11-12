@@ -75,6 +75,49 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0], "Justin Timberlake")
 
+    def test_add_artist(self):
+        res = self.kb_api.add_artist("Heart")
+        self.assertEqual(res, True, "Failed to add artist 'Heart' to knowledge base.")
+
+        res = self.kb_api.get_node_ids_by_entity_type("Heart")
+        self.assertTrue("artist" in res,
+            "Expected to find an 'artist' entity with name 'Heart', but got: {0}".format(res))
+
+    def test_add_song(self):
+        res = self.kb_api.add_song("Heart", "Justin Bieber")
+        self.assertEqual(res, True, "Failed to add song 'Heart' by artist 'Justin Bieber' to knowledge base.")
+
+        res = self.kb_api.get_node_ids_by_entity_type("Heart")
+        self.assertTrue("song" in res,
+            "Expected to find an 'song' entity with name 'Heart', but got: {0}".format(res))
+
+    # The logic tested here is currently implemented in the KR API
+    # However, if it is moved to the schema (e.g. trigger functions),
+    # then this test can be moved to the schema test module
+    def test_new_song_with_unknown_artist_rejected(self):
+        res = self.kb_api.add_song("Song by Unknown Artist", "Unknown artist")
+        self.assertEqual(res, False, "Expected song with unknown artist to be rejected")
+
+        res = self.kb_api.get_node_ids_by_entity_type("Song by Unknown Artist")
+        self.assertTrue("song" not in res,
+            "Insertion of song with unknown artist should not have been added to nodes table")
+
+    def test_contains_entity(self):
+        res = self.kb_api.get_node_ids_by_entity_type("Justin Timberlake")
+        self.assertTrue("artist" in res,
+            "Expected to find an 'artist' entity with name 'Justin Timberlake', but got: {0}".format(res))
+        self.assertEqual(len(res["artist"]), 1,
+            "Expected to find exactly one entity (of type 'artist') with name 'Justin Timberlake', but got: {0}".format(res))
+
+        res = self.kb_api.get_node_ids_by_entity_type("Despacito")
+        self.assertTrue("song" in res,
+            "Expected to find an 'song' entity with name 'Despacito', but got: {0}".format(res))
+        self.assertEqual(len(res["song"]), 1,
+            "Expected to find exactly one entity (of type 'song') with name 'Despacito', but got: {0}".format(res))
+
+        res = self.kb_api.get_node_ids_by_entity_type("Unknown entity")
+        self.assertEqual(res, {}, "Expected no results from query for unknown entity, but got {}".format(res))
+
 
 if __name__ == '__main__':
     unittest.main()

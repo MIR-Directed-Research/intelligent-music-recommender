@@ -76,6 +76,33 @@ class KnowledgeBaseAPI:
             print("ERROR: Could not retrieve data for song with name '{}': {}".format(song_name, str(e)))
             return None
 
+    def get_node_ids_by_entity_type(self, entity_name):
+        """Retrieves and organizes IDs of all nodes that match given entity name.
+
+        Return:
+            (dict): key=entity_types of all nodes with the given name, val=list of int IDs. Empty if no matches.
+                e.g. {"artist": [1, 2], "song": [5,7]}
+        """
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            SELECT type, id
+                            FROM nodes
+                            WHERE name == (?)
+                        """, (entity_name,))
+                        node_ids_by_type = dict()
+                        for x in cursor.fetchall():
+                            ids = node_ids_by_type.setdefault(x[0], [])
+                            ids.append(x[1])
+                            node_ids_by_type[x[0]] = ids
+                        return node_ids_by_type
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not retrieve ids for entity with name '{}': {}".format(entity_name, str(e)))
+            return None
+
     def get_all_music_entities(self):
         """Gets a list of all the names, genres,
         artists, ect. in the DB
@@ -184,3 +211,130 @@ class KnowledgeBaseAPI:
             return False
 
         return True
+
+    def _is_valid_entity_type(self, entity_type):
+        """Indicates whether given entity type is valid.
+
+        NOTE:
+            - Ideally, we would have a table in our database for valid entity types.
+            - Also, using enums would probably be cleaner.
+        """
+        return entity_type == "artist" or entity_type == "song"
+
+    def add_artist(self, name):
+        """Inserts given values into two tables: artists and nodes.
+
+        Ensures that given artist is either added to both or neither of the songs and nodes tables.
+
+        Returns:
+            (bool): True if artist added to both songs and nodes table; False otherwise.
+        """
+        node_id = self._add_node(name, "artist")
+        if node_id is None:
+            print("ERROR: Failed to add artist '{}' to semantic network.".format(name))
+            return False
+
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            INSERT INTO artists (node_id) VALUES (?);
+                        """, (node_id,))
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not add artist '{0}'".format(
+                name))
+            return False
+
+        except sqlite3.IntegrityError as e:
+            print("ERROR: Could not add artist '{}' due to schema constraints: {}"
+                .format(artist_name, str(e)))
+            return False
+
+        return True
+
+    def add_song(self, name, artist):
+        """Inserts given values into two tables: songs and nodes.
+
+        Ensures that:
+            - Given song is either added to both or neither of the songs and nodes tables.
+            - Given artist is not ambiguous (only matches one 'artist' entry in nodes table).
+
+        Returns:
+            (bool): True if song added to both songs and nodes table; False otherwise.
+        """
+        matching_artist_node_ids = self.get_node_ids_by_entity_type(artist).get("artist", [])
+        if len(matching_artist_node_ids) != 1:
+            print("ERROR: Failed to add song '{}' because given artist '{}' corresponded to {} IDs (need 1)."
+                .format(name, artist, len(matching_artist_node_ids)))
+            return False
+        artist_node_id = matching_artist_node_ids[0]
+
+        node_id = self._add_node(name, "song")
+        if node_id is None:
+            print("ERROR: Failed to add song '{}' due to an error.".format(name))
+            return False
+
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            INSERT INTO songs (main_artist_id, node_id) VALUES (?, ?);
+                        """, (artist_node_id, node_id,))
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not add song '{}' with artist '{}'".format(
+                name, artist))
+            return False
+
+        except sqlite3.IntegrityError as e:
+            print("ERROR: Could not add song '{}' with artist '{}' due to schema constraints: {}"
+                .format(name, artist, str(e)))
+            return False
+
+        return True
+
+    def _add_node(self, entity_name, entity_type):
+        """Adds given entity to knowledge representation system.
+
+        In particular, this function adds a node to the semantic network by
+        inserting it into the nodes table.
+
+        Params:
+            entity_name (string): for one of song, artist, etc.
+                e.g. "Despacito", "Justin Bieber"
+
+        Returns:
+            id (int): id of new entry in nodes table for given entry; None if insertion failed.
+        """
+        if not self._is_valid_entity_type(entity_type):
+            print("ERROR: Given entity type '{0}' is invalid.".format(entity_type))
+            return None
+
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        # NULL is passed so that SQLite assigns the auto-generated row_id value
+                        # see:  - https://www.sqlite.org/autoinc.html
+                        #       - https://stackoverflow.com/questions/7905859/is-there-an-auto-increment-in-sqlite
+                        cursor.execute("""
+                            INSERT INTO nodes (name, type, id) VALUES (?, ?, NULL);
+                        """, (entity_name, entity_type,))
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not insert entity with name '{}' into nodes table: {}".format(entity_name, str(e)))
+            return None
+
+        except sqlite3.IntegrityError as e:
+            print("ERROR: Integrity constraints prevented insertion of entity with name '{}' into nodes table: {}"
+                .format(entity_name, str(e)))
+            return None
+
+        node_ids = self.get_node_ids_by_entity_type(entity_name).get(entity_type, [])
+
+        # NOTE: taking the max is a heuristic to disambiguate between multiplet matching ID:
+        # Since we _just_ inserted the node and its id is autogenerated, it must have the largest id.
+        return max(node_ids)
