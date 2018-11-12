@@ -37,6 +37,39 @@ class TestDbSchema(unittest.TestCase):
         self.assertEqual(res, False,
             "Expected attempt to add a duplicate edge to fail.")
 
+    def test_edges_not_null_constraints(self):
+        res = self.kb_api.connect_entities(None, "Justin Timberlake", "similar to", 1)
+        self.assertEqual(res, False,
+            "Expected 'None' value for artist to be rejected.")
+
+        res = self.kb_api.connect_entities("U2", "U2", None, 1)
+        self.assertEqual(res, False,
+            "Expected 'None' value for edge type to be rejected.")
+
+        res = self.kb_api.connect_entities("U2", "U2", "similar to", None)
+        self.assertEqual(res, False,
+            "Expected 'None' value for edge score to be rejected.")
+
+    def test_entities_not_null_constraints(self):
+        res = self.kb_api.add_artist(None)
+        self.assertEqual(res, False,
+            "Expected 'None' value for artist to be rejected.")
+
+        res = self.kb_api.add_song("Song name", None)
+        self.assertEqual(res, False,
+            "Expected 'None' value for artist to be rejected.")
+
+        res = self.kb_api.add_song(None, "Artist name")
+        self.assertEqual(res, False,
+            "Expected 'None' value for artist to be rejected.")
+
+        node_id = self.kb_api._add_node(None, "artist")
+        self.assertEqual(node_id, None,
+            "Expected 'None' value for entity name to be rejected.")
+
+        node_id = self.kb_api._add_node("Some entity", None)
+        self.assertEqual(node_id, None,
+            "Expected 'None' value for entity type to be rejected.")
 
 if __name__ == '__main__':
     unittest.main()
