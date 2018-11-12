@@ -82,6 +82,41 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         res = self.kb_api.connect_entities("Artist and Song name clash", "Justin Timberlake", "similar to", 0)
         self.assertEqual(res, False, "")
 
+    def test_get_node_ids_by_entity_type(self):
+        node_ids_dict = self.kb_api.get_node_ids_by_entity_type("Justin Bieber")
+        all_entity_types = list(node_ids_dict.keys())
+        self.assertEqual(
+            all_entity_types,
+            ["artist"],
+            "Expected to find (only) entities of type 'artist' for 'Justin Bieber', but got: {}"
+                .format(node_ids_dict)
+        )
+        self.assertEqual(
+            len(node_ids_dict.get("artist")),
+            1,
+            "Expected to find exactly one entity of type 'artist' for 'Justin Bieber', but got: {}"
+                .format(node_ids_dict)
+        )
+
+        self.kb_api.add_artist("Song and Artist name")
+        self.kb_api.add_song("Song and Artist name", "U2")
+
+        node_ids_dict = self.kb_api.get_node_ids_by_entity_type("Song and Artist name")
+        alphabetized_entity_types = sorted(list(node_ids_dict.keys()))
+        self.assertEqual(
+            alphabetized_entity_types,
+            ["artist", "song"],
+            "Expected to find (exaclty) two entity types: 'artist' and 'song', but got: {}"
+                .format(node_ids_dict)
+        )
+
+    def test_get_matching_node_ids(self):
+        node_ids = self.kb_api._get_matching_node_ids("Justin Bieber")
+        self.assertEqual(len(node_ids), 1,
+            "Expected to find exactly one node id for 'Justin Bieber', but got: {}"
+                .format(node_ids)
+        )
+
     def test_add_artist(self):
         res = self.kb_api.add_artist("Heart")
         self.assertEqual(res, True, "Failed to add artist 'Heart' to knowledge base.")
