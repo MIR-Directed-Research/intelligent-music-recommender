@@ -224,7 +224,7 @@ class KnowledgeBaseAPI:
     def add_artist(self, name):
         """Inserts given values into two tables: artists and nodes.
 
-        Ensures that given artist is either added to both or neither of the songs and nodes tables.
+        Ensures that given artist is either added to both or neither.
 
         Returns:
             (bool): True if artist added to both songs and nodes table; False otherwise.
@@ -258,7 +258,7 @@ class KnowledgeBaseAPI:
         """Inserts given values into two tables: songs and nodes.
 
         Ensures that:
-            - Given song is either added to both or neither of the songs and nodes tables.
+            - Given song is either added to both or neither.
             - Given artist is not ambiguous (only matches one 'artist' entry in nodes table).
 
         Returns:

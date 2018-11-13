@@ -3,17 +3,16 @@ import unittest
 import os
 
 from knowledge_base.api import KnowledgeBaseAPI
-
+from scripts import test_db_utils
 
 class TestMusicKnowledgeBaseAPI(unittest.TestCase):
 
     def setUp(self):
-        # TODO: ensure test.db exists?
-        DB_path = "tests/test.db"
-        # Check working directory, update path to DB accordingly.
-        if os.getcwd().split('/')[-1] == 'tests':
-            DB_path = "test.db"
+        DB_path = test_db_utils.create_and_populate_db()
         self.kb_api = KnowledgeBaseAPI(dbName=DB_path)
+
+    def tearDown(self):
+        test_db_utils.remove_db()
 
     def test_get_song_data(self):
         res = self.kb_api.get_song_data("Despacito")

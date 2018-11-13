@@ -1,15 +1,19 @@
 from contextlib import closing
 from knowledge_base.api import KnowledgeBaseAPI
+from scripts import test_db_utils
+
 import os
 import unittest
 
 class TestDbSchema(unittest.TestCase):
-    def setUp(self):
-        self.DB_path = "tests/test.db"
-        # Check working directory, update path to DB accordingly.
-        if os.getcwd().split('/')[-1] == 'tests':
-            self.DB_path = "test.db"
-        self.kb_api = KnowledgeBaseAPI(self.DB_path)
+    @classmethod
+    def setUpClass(self):
+        DB_path = test_db_utils.create_and_populate_db()
+        self.kb_api = KnowledgeBaseAPI(dbName=DB_path)
+
+    @classmethod
+    def tearDownClass(self):
+        test_db_utils.remove_db()
 
     def test_rejects_unknown_entity(self):
         res = self.kb_api.connect_entities("Unknown Entity", "Justin Timberlake", "similar to", 0)
