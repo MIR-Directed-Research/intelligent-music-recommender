@@ -6,21 +6,21 @@ from command_evaluation.eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
 from nlp.nlp_layer import NLP
 from tests.mock_objects import MockController
+from scripts import test_db_utils
 
 
 class TestNLP(unittest.TestCase):
     def setUp(self):
-        self.DB_path = "tests/test.db"
-        # Check working directory, update path to DB accordingly.
-        if os.getcwd().split('/')[-1] == 'tests':
-            self.DB_path = "test.db"
-
+        self.DB_path = test_db_utils.create_and_populate_db()
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
         self.results_dict = {}
         self.player_controller = MockController(self.results_dict)
         self.interactions = EvalEngine(self.DB_path, self.player_controller)
         self.nlp = NLP(self.DB_path, self.interactions.keywords)
         self.keywords = self.interactions.keywords
+
+    def tearDown(self):
+        test_db_utils.remove_db()
 
     def test_parse_input_play(self):
         """Test that `control_play` intention is parsed."""
