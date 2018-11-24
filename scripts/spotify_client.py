@@ -1,6 +1,6 @@
 import requests
 from base64 import b64encode
-from sys import argv
+import sys
 
 class SpotifyClient():
 
@@ -37,17 +37,14 @@ class SpotifyClient():
         headers["Authorization"] = "Bearer {}".format(self.token)
         return headers
 
-    def search_artist(self, artist):
-        """Retrieves data summary of specified artist.
+    def get_artist_id(self, artist):
+        """Retrieves the Spotify ID of specified artist.
 
         Params:
             artist (string): e.g. "Justin Bieber"
 
         Returns:
-            (dict): data summary; None if search failed or rendered no results.
-                e.g. {
-                    "genres": ['canadian pop', 'dance pop', 'pop', 'post-teen pop']
-                }
+            (string): Spotify's artist ID; None if search failed or rendered no results.
         """
         params = dict(q=artist, type="artist")
         headers = self.set_token_in_auth_header(dict())
@@ -75,26 +72,29 @@ class SpotifyClient():
             return None
 
         print("Returning top match out of total {}.".format(num_hits))
-        return dict(
-            genres=body["artists"]["items"][0]["genres"]
-        )
+        return body["artists"]["items"][0]["id"]
+
+
+def get_artist_IDs(spotify, f):
+    artist_by_id = dict()
+    for line in f:
+        tmp_artist_name = line.strip()
+        tmp_ID = spotify.get_artist_id(tmp_artist_name)
+        if tmp_ID is not None:
+            print("Found ID for:", tmp_artist_name, ":", tmp_ID)
+            artist_by_id[tmp_artist_name] = tmp_ID
+    return artist_by_id
 
 
 def main():
-    if len(argv) < 2:
-        print("Usage: python my_spotify_client.py path_to_file_containing_spotify_creds")
-        sys.exit(1)
+    print("Enter Spotify client ID:")
+    client_id = sys.stdin.readline().split(" ")[-1].strip("\n")
+    print("Enter Spotify secret key:")
+    secret_key = sys.stdin.readline().split(" ")[-1].strip("\n")
 
-    # Input file is assumed to contain at least two lines
-    # 1st line ends with the client id
-    # 2nd line ends with the secret key
-    with open(argv[1], "r", encoding="utf-8") as f:
-        client_id = f.readline().split(" ")[-1].strip("\n")
-        secret_key = f.readline().split(" ")[-1].strip("\n")
-
+    print("Enter names of artists, separated by new-lines:")
     spotify = SpotifyClient(client_id, secret_key)
-    print(spotify.search_artist("Justin Bieber"))
-
+    print(get_artist_IDs(spotify, sys.stdin))
 
 if __name__ == "__main__":
     main()
