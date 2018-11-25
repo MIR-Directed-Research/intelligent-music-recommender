@@ -1,5 +1,6 @@
 import requests
 from base64 import b64encode
+import pprint
 import sys
 
 class SpotifyClient():
@@ -36,6 +37,44 @@ class SpotifyClient():
 
         headers["Authorization"] = "Bearer {}".format(self.token)
         return headers
+
+    def get_related_artists(self, artist_ID):
+        """Retrieves metadata of artists related to the specified artist.
+
+        Specifically, metadata includes (1) name, (2) genres, and (3) number of followers of
+        each related artist.
+
+        Params:
+            artist_ID (string): Spotify ID for relevant artist. e.g. "51Blml2LZPmy7TTiAg47vQ"
+
+        Returns:
+            related_artists (dict): key is ID of related artists, val is their metadata packaged in a dict.
+        """
+        headers = self.set_token_in_auth_header(dict())
+        resp = requests.get(
+            self.api_base + "/v1/artists/{}/related-artists".format(artist_ID),
+            headers=headers,
+        )
+
+        try:
+            body = resp.json()
+        except Exception as e:
+            print("ERROR: Could not parse response body to request for token.")
+            raise e
+
+        if resp.status_code != 200:
+            print("ERROR: Request for finding related artists of artist with ID '{}' failed. Received HTTP code:{}".format(artist_ID, resp.status_code))
+            print(body)
+            return None
+
+        related_artists = dict()
+        for hit in body.get("artists"):
+            related_artists[hit.get("name")] = dict(
+                ID=hit.get("id"),
+                genres=hit.get("genres"),
+                numFollowers=int(hit.get("followers", dict()).get("total")),
+            )
+        return related_artists
 
     def get_artist_id(self, artist):
         """Retrieves the Spotify ID of specified artist.
@@ -85,7 +124,6 @@ def get_artist_IDs(spotify, f):
             artist_by_id[tmp_artist_name] = tmp_ID
     return artist_by_id
 
-
 def main():
     print("Enter Spotify client ID:")
     client_id = sys.stdin.readline().split(" ")[-1].strip("\n")
@@ -94,7 +132,19 @@ def main():
 
     print("Enter names of artists, separated by new-lines:")
     spotify = SpotifyClient(client_id, secret_key)
-    print(get_artist_IDs(spotify, sys.stdin))
+    artist_ids = get_artist_IDs(spotify, sys.stdin)
+
+    artist_metadata = dict()
+    pp = pprint.PrettyPrinter(
+        indent=2,
+        depth=2,        # hide items nested past 3 levels
+        compact=True,   # fit as many items into a single line as possible
+    )
+    for artist, artist_ID in artist_ids.items():
+        artist_metadata["ID"] = artist_ID
+        artist_metadata["related_artists"] = spotify.get_related_artists(artist_ID)
+
+        pp.pprint(artist_metadata)
 
 if __name__ == "__main__":
     main()
