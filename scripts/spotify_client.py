@@ -146,6 +146,48 @@ class SpotifyClient():
         print("Returning top match out of total {}.".format(num_hits))
         return body["artists"]["items"][0]["id"]
 
+    def get_top_songs(self, artist_ID, country_iso_code):
+        """Retrieves metadata of the specified artist's top songs on Spotify.
+
+        Params:
+            artist_ID (string):
+
+        Returns:
+            top_songs (dict): key is song name, val is its metadata packaged in a dict. None if an error occurs.
+        """
+        headers = self.set_token_in_auth_header(dict())
+        params = dict(country=country_iso_code)
+        resp = requests.get(
+            self.api_base + "/v1/artists/{}/top-tracks".format(artist_ID),
+            headers=headers,
+            params=params,
+        )
+
+        try:
+            body = resp.json()
+        except Exception as e:
+            print("ERROR: Could not parse response body of top songs request for artist with ID: ", artist_ID)
+            return None
+
+        if resp.status_code != 200:
+            print("ERROR: Request for finding top songs of '{}' failed. Received HTTP code:{}".format(artist_ID, resp.status_code))
+            print(body)
+            return None
+
+        top_songs = dict()
+        for track in body["tracks"]:
+            # ignore entire albums for now
+            if track["album"]["album_type"] == "album":
+                continue
+
+            top_songs[track["name"]] = dict(
+                duration_ms=int(track["duration_ms"]),
+                id=track["id"],
+                popularity=int(track["popularity"]),
+                uri=track["uri"],
+            )
+        return top_songs
+
 
 def get_artist_IDs(spotify, f):
     artist_by_id = dict()
@@ -176,6 +218,7 @@ def main():
     for artist, artist_ID in artist_ids.items():
         artist_metadata["ID"] = artist_ID
         artist_metadata["related_artists"] = spotify.get_related_artists(artist_ID)
+        artist_metadata["songs"] = spotify.get_top_songs(artist_ID, "CA")
 
         pp.pprint(artist_metadata)
 
