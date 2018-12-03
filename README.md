@@ -17,6 +17,10 @@ First, follow the instructions in the prerequisites section. Then, from the proj
 For example:
 ```
 $ python view/cli.py
+Initializing app...
+Running app...
+Welcome!
+
 Hello
 Response: Hi there! Ask me to play artists or songs. I can also find songs that are similar to other artists.
 
@@ -34,6 +38,22 @@ Playing: ['Rock Your Body']
 
 Can you play artists like Justin Bieber?
 Playing: ['Justin Timberlake', 'Shawn Mendes']
+```
+
+### With Spotify Data
+If you provide a Spotify client ID and secret as runtime arguments (in that order) to `cli.py`, then it will use them to pull actual data from Spotify. Getting these credentials requires signing up for a Spotify developer account and registering an application. (You could crack open `cli.py` to customize the artists for which data is retrieved!)
+
+```
+$ python view/cli.py <SPOTIFY_CLIENT_ID> <SPOTIFY_SECRET_KEY>
+Initializing app...
+Running app...
+Welcome!
+
+Hi
+Response: Hi there! Ask me to play artists or songs. I can also find songs that are similar to other artists.
+
+Play someone like Ariana Grande
+Playing: ['Troye Sivan', 'Taylor Swift', 'Miley Cyrus', 'Selena Gomez & The Scene', 'Hailee Steinfeld', 'Zara Larsson', 'DNCE', 'Alessia Cara', 'Madison Beer', 'Rita Ora', 'Fifth Harmony', 'Camila Cabello', 'Carly Rae Jepsen', 'Selena Gomez', 'Demi Lovato', 'Halsey', 'Little Mix', 'Julia Michaels', 'Dua Lipa', 'ZAYN']
 ```
 
 ## Test Environment

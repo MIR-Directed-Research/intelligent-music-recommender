@@ -138,7 +138,6 @@ def get_artist_metadata(spotify, artist_names):
         ...
 
     """
-    # TODO: fill and check cache (e.g. pickle file) for Spotify data to avoid unnecessary network latency
     artist_ids = get_artist_IDs(spotify, artist_names)
     artist_metadata = dict()
     for artist, artist_ID in artist_ids.items():
@@ -151,11 +150,7 @@ def get_artist_metadata(spotify, artist_names):
 
 def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, artists):
     path_to_db = create_db()
-
-    print("Fetching artist metadata from Spotify...")
     artist_metadata = get_artist_metadata(SpotifyClient(spotify_client_id, spotify_secret_key), artists)
-    pp.pprint(artist_metadata)
-
     kb_api = KnowledgeBaseAPI(path_to_db)
     for artist_name, artist_info in artist_metadata.items():
         kb_api.add_artist(artist_name)
@@ -167,9 +162,6 @@ def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, a
             kb_api.add_artist(rel_artist_name)
             kb_api.connect_entities(artist_name, rel_artist_name, "similar to", 100)
             kb_api.connect_entities(rel_artist_name, artist_name, "similar to", 100)
-
-    for artist_name, _ in artist_metadata.items():
-        print("Artist", artist_name, "is similar to", kb_api.get_similar_entities(artist_name))
     return path_to_db
 
 def main():
