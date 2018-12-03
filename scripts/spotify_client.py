@@ -143,7 +143,6 @@ class SpotifyClient():
             print("Could not find info for artist '{}'".format(artist))
             return None
 
-        print("Returning top match out of total {}.".format(num_hits))
         return body["artists"]["items"][0]["id"]
 
     def get_top_songs(self, artist_ID, country_iso_code):
@@ -188,39 +187,3 @@ class SpotifyClient():
             )
         return top_songs
 
-
-def get_artist_IDs(spotify, f):
-    artist_by_id = dict()
-    for line in f:
-        tmp_artist_name = line.strip()
-        tmp_ID = spotify.get_artist_id(tmp_artist_name)
-        if tmp_ID is not None:
-            print("Found ID for:", tmp_artist_name, ":", tmp_ID)
-            artist_by_id[tmp_artist_name] = tmp_ID
-    return artist_by_id
-
-def main():
-    print("Enter Spotify client ID:")
-    client_id = sys.stdin.readline().split(" ")[-1].strip("\n")
-    print("Enter Spotify secret key:")
-    secret_key = sys.stdin.readline().split(" ")[-1].strip("\n")
-
-    print("Enter names of artists, separated by new-lines:")
-    spotify = SpotifyClient(client_id, secret_key)
-    artist_ids = get_artist_IDs(spotify, sys.stdin)
-
-    artist_metadata = dict()
-    pp = pprint.PrettyPrinter(
-        indent=2,
-        depth=2,        # hide items nested past 3 levels
-        compact=True,   # fit as many items into a single line as possible
-    )
-    for artist, artist_ID in artist_ids.items():
-        artist_metadata["ID"] = artist_ID
-        artist_metadata["related_artists"] = spotify.get_related_artists(artist_ID)
-        artist_metadata["songs"] = spotify.get_top_songs(artist_ID, "CA")
-
-        pp.pprint(artist_metadata)
-
-if __name__ == "__main__":
-    main()
