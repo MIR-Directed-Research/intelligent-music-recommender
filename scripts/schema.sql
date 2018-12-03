@@ -39,3 +39,5 @@ CREATE TABLE songs(
     main_artist_id  int REFERENCES artists(node_id) NOT NULL,
     node_id         int REFERENCES nodes(id) NOT NULL
 );
+
+INSERT INTO relations (type, is_directed) VALUES ("similar to", false);

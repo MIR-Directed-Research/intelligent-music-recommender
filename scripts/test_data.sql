@@ -20,7 +20,6 @@ INSERT INTO songs VALUES (4, 13);
 
 -- * Define some edges+relations for testing
 -- -------------------------------
-INSERT INTO relations VALUES ("similar to", false);
 -- Justin Bieber is similar to Justin Timberlake and Shawn Mendes
 INSERT INTO edges VALUES (1, 2, "similar to", 75);
 INSERT INTO edges VALUES (1, 4, "similar to", 100);
