@@ -20,20 +20,15 @@ class TestDbSchema(unittest.TestCase):
         self.assertEqual(res, False,
             "Expected attempt to connect an unknown entity to fail.")
 
-        res = self.kb_api.get_similar_entities("Unknown Entity")
+        res = self.kb_api.get_related_entities("Unknown Entity")
         self.assertEqual(res, [])
-
-    def test_rejects_unknown_relation(self):
-        res = self.kb_api.connect_entities("Shawn Mendes", "Justin Timberlake", "unknown relation", 0)
-        self.assertEqual(res, False,
-            "Expected attempt to connect entities with unknown relation to fail.")
 
     def test_rejects_score_out_of_range(self):
         res = self.kb_api.connect_entities("Justin Timberlake", "Justin Timberlake", "similar to", -1)
         self.assertEqual(res, False,
             "Expected attempt to connect entities with score out-of-range to fail.")
 
-        res = self.kb_api.get_similar_entities("Justin Timberlake")
+        res = self.kb_api.get_related_entities("Justin Timberlake")
         self.assertEqual(len(res), 0)
 
     def test_rejects_duplicate_edge(self):
@@ -56,15 +51,15 @@ class TestDbSchema(unittest.TestCase):
 
     def test_entities_not_null_constraints(self):
         res = self.kb_api.add_artist(None)
-        self.assertEqual(res, False,
+        self.assertEqual(res, None,
             "Expected 'None' value for artist to be rejected.")
 
         res = self.kb_api.add_song("Song name", None)
-        self.assertEqual(res, False,
+        self.assertEqual(res, None,
             "Expected 'None' value for artist to be rejected.")
 
         res = self.kb_api.add_song(None, "Artist name")
-        self.assertEqual(res, False,
+        self.assertEqual(res, None,
             "Expected 'None' value for artist to be rejected.")
 
         node_id = self.kb_api._add_node(None, "artist")

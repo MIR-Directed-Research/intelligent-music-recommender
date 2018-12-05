@@ -15,19 +15,52 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         test_db_utils.remove_db()
 
     def test_get_song_data(self):
-        res = self.kb_api.get_song_data("Despacito")
+        song_data = self.kb_api.get_song_data("Despacito")
         # we don't care what the node ID is
+        self.assertEqual(1, len(song_data), "Expected exactly one result from query for song 'Despacito'.")
         self.assertEqual(
-            res, ('Despacito', 'Justin Bieber'),
-            "Queried song data did not match expected.",
+            song_data[0],
+            dict(
+                id=10,
+                song_name="Despacito",
+                artist_name="Justin Bieber",
+                duration_ms=222222,
+                popularity=10,
+            ),
+            "Found expected values for song data for 'Despacito'."
         )
 
     def test_get_song_data_dne(self):
         res = self.kb_api.get_song_data("Not In Database")
-        self.assertEqual(res, None, "Expected 'None' result for queried song not in DB.")
+        self.assertEqual(res, [], "Expected empty list of results for queried song not in DB.")
+
+    def test_get_artist_data(self):
+        artist_data = self.kb_api.get_artist_data("Justin Bieber")
+        self.assertEqual(len(artist_data), 1, "Expected exactly one result for artist 'Justin Bieber'.")
+        artist_data[0]["genres"] = set(artist_data[0]["genres"])
+        self.assertEqual(
+            artist_data[0],
+            dict(genres=set(["Pop", "Super pop"]), id=1, num_spotify_followers=4000, name="Justin Bieber"),
+            "Artist data for 'Justin Bieber' did not match expected.",
+        )
+
+    def test_get_artist_data_dne(self):
+        artist_data = self.kb_api.get_artist_data("Unknown artist")
+        self.assertEqual(artist_data, [], "Expected 'None' result for unknown artist.")
+
+    def test_get_songs(self):
+        res = self.kb_api.get_songs("Justin Bieber")
+        self.assertEqual(res, ["Despacito", "Sorry"], "Songs retrieved for 'Justin Bieber' did not match expected.")
+
+        res = self.kb_api.get_songs("Justin Timberlake")
+        self.assertEqual(res, ["Rock Your Body"], "Songs retrieved for 'Justin Timberlake' did not match expected.")
+
+    def test_get_songs_unknown_artist(self):
+        res = self.kb_api.get_songs("Unknown artist")
+        self.assertEqual(res, None, "Unexpected songs retrieved for unknown artist.")
 
     def test_find_similar_song(self):
-        res = self.kb_api.get_similar_entities("Despacito")
+        res = self.kb_api.get_related_entities("Despacito")
         self.assertEqual(
             len(res), 1,
             "Expected only one song similar to \"Despacito\". Found {0}".format(res),
@@ -38,7 +71,7 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         )
 
     def test_find_similar_artist(self):
-        res = self.kb_api.get_similar_entities("Justin Bieber")
+        res = self.kb_api.get_related_entities("Justin Bieber")
         self.assertEqual(
             len(res), 2,
             "Expected exactly two artists similar to Justin Bieber.",
@@ -60,23 +93,45 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         )
 
     def test_find_similar_to_entity_that_dne(self):
-        res = self.kb_api.get_similar_entities("Unknown Entity")
+        res = self.kb_api.get_related_entities("Unknown Entity")
         self.assertEqual(res, [])
 
-    def test_connect_entities(self):
-        res = self.kb_api.get_similar_entities("Shawn Mendes")
+    def test_get_related_genres(self):
+        genre_rel_str = self.kb_api.approved_relations["genre"]
+        rel_genres = self.kb_api.get_related_entities("Justin Bieber", rel_str=genre_rel_str)
+        self.assertEqual(set(rel_genres), set(["Pop", "Super pop"]),
+            "Did not find expected related genres for artist 'Justin Bieber'")
+
+        rel_genres = self.kb_api.get_related_entities("Justin Timberlake", rel_str=genre_rel_str)
+        self.assertEqual(rel_genres, ["Pop"],
+            "Did not find expected related genres for artist 'Justin Timberlake'")
+
+    def test_connect_entities_by_similarity(self):
+        res = self.kb_api.get_related_entities("Shawn Mendes")
         self.assertEqual(len(res), 0)
 
         res = self.kb_api.connect_entities("Shawn Mendes", "Justin Timberlake", "similar to", 0)
         self.assertEqual(res, True, "")
 
-        res = self.kb_api.get_similar_entities("Shawn Mendes")
+        res = self.kb_api.get_related_entities("Shawn Mendes")
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0], "Justin Timberlake")
 
+    def test_connect_entities_by_genre(self):
+        genre_rel_str = self.kb_api.approved_relations["genre"]
+        res = self.kb_api.get_related_entities("Shawn Mendes", rel_str=genre_rel_str)
+        self.assertEqual(len(res), 0)
+
+        res = self.kb_api.connect_entities("Shawn Mendes", "Pop", "of genre", 100)
+        self.assertEqual(res, True, "")
+
+        res = self.kb_api.get_related_entities("Shawn Mendes", rel_str=genre_rel_str)
+        self.assertEqual(len(res), 1, "Expected to find exactly one related genre for 'Shawn Mendes'.")
+        self.assertEqual(res[0], "Pop", "Found unexpected genre for 'Shawn Mendes'.")
+
     def test_rejects_connect_ambiguous_entities(self):
-        res = self.kb_api.add_artist("Artist and Song name clash")
-        res = self.kb_api.add_song("Artist and Song name clash", "U2")
+        self.kb_api.add_artist("Artist and Song name clash")
+        self.kb_api.add_song("Artist and Song name clash", "U2")
 
         res = self.kb_api.connect_entities("Artist and Song name clash", "Justin Timberlake", "similar to", 0)
         self.assertEqual(res, False, "")
@@ -112,38 +167,137 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
     def test_get_matching_node_ids(self):
         node_ids = self.kb_api._get_matching_node_ids("Justin Bieber")
         self.assertEqual(len(node_ids), 1,
-            "Expected to find exactly one node id for 'Justin Bieber', but got: {}"
+            "Expected to find exactly one matching node for 'Justin Bieber', but got: {}"
+                .format(node_ids)
+        )
+
+    def test_get_matching_node_ids_empty(self):
+        node_ids = self.kb_api._get_matching_node_ids("Unknown artist")
+        self.assertEqual(len(node_ids), 0,
+            "Expected to find no matching node for 'Unknown artist', but got: {}"
                 .format(node_ids)
         )
 
     def test_add_artist(self):
-        res = self.kb_api.add_artist("Heart")
-        self.assertEqual(res, True, "Failed to add artist 'Heart' to knowledge base.")
+        sample_genres = ["Pop", "Very pop", "Omg so pop"]
+        new_artist_node_id = self.kb_api.add_artist("Heart", genres=sample_genres, num_spotify_followers=1)
+        self.assertNotEqual(new_artist_node_id, None, "Failed to add artist 'Heart' to knowledge base.")
 
-        res = self.kb_api.get_node_ids_by_entity_type("Heart")
-        self.assertTrue("artist" in res,
-            "Expected to find an 'artist' entity with name 'Heart', but got: {0}".format(res))
+        artist_data = self.kb_api.get_artist_data("Heart")
+        self.assertEqual(len(artist_data), 1, "Expected unique match for artist 'Heart'.")
+
+        artist_data = artist_data[0]
+        artist_data["genres"] = set(artist_data["genres"])
+
+        self.assertEqual(
+            artist_data,
+            dict(
+                name="Heart",
+                id=new_artist_node_id,
+                genres=set(sample_genres),
+                num_spotify_followers=1,
+            ),
+            "Did not find expected genres for artist 'Heart'.",
+        )
+
+    def test_reject_add_artist_already_exists(self):
+        artist_node_id = self.kb_api.get_artist_data("Justin Bieber")[0]["id"]
+        res = self.kb_api.add_artist("Justin Bieber")
+        self.assertEqual(res, artist_node_id, "Expected rejection of attempt to add artist 'Justin Bieber' to knowledge base.")
+
+    def test_add_artist_omitted_opt_params(self):
+        res = self.kb_api.add_artist("Heart")
+        self.assertNotEqual(res, None, "Failed to add artist 'Heart' to knowledge base.")
+
+        artist_data = self.kb_api.get_artist_data("Heart")
+        self.assertEqual(len(artist_data), 1, "Expected unique match for artist 'Heart'.")
+        self.assertEqual(artist_data[0]["name"], "Heart", "Expected match for artist 'Heart'.")
+        self.assertEqual(artist_data[0]["genres"], [], "Expected no genres for artist 'Heart'.")
+        self.assertEqual(artist_data[0]["num_spotify_followers"], None, "Expected no genres for artist 'Heart'.")
 
     def test_add_song(self):
-        res = self.kb_api.add_song("Heart", "Justin Bieber")
-        self.assertEqual(res, True, "Failed to add song 'Heart' by artist 'Justin Bieber' to knowledge base.")
+        new_song_node_id = self.kb_api.add_song("Heart", "Justin Bieber", duration_ms=11111, popularity=100)
+        self.assertNotEqual(new_song_node_id, None, "Failed to add song 'Heart' by artist 'Justin Bieber' to knowledge base.")
 
-        res = self.kb_api.get_node_ids_by_entity_type("Heart")
-        self.assertTrue("song" in res,
-            "Expected to find an 'song' entity with name 'Heart', but got: {0}".format(res))
+        song_data = self.kb_api.get_song_data("Heart")
+        self.assertEqual(len(song_data), 1, "Expected exactly one result.")
+
+        song_data = song_data[0]
+        self.assertEqual(
+            song_data,
+            dict(
+                id=new_song_node_id,
+                song_name="Heart",
+                artist_name="Justin Bieber",
+                duration_ms=11111,
+                popularity=100
+            ),
+            "Received unexpected song data"
+        )
+
+    def test_add_song_omitted_opt_params(self):
+        new_song_node_id = self.kb_api.add_song("What do you mean?", "Justin Bieber")
+        self.assertNotEqual(new_song_node_id, None, "Failed to add song 'sorry' by artist 'Justin Bieber' to knowledge base.")
+
+        song_data = self.kb_api.get_song_data("What do you mean?")
+        self.assertEqual(len(song_data), 1, "Expected exactly one result.")
+
+        song_data = song_data[0]
+        self.assertEqual(
+            song_data,
+            dict(
+                id=new_song_node_id,
+                song_name="What do you mean?",
+                artist_name="Justin Bieber",
+                duration_ms=None,
+                popularity=None
+            ),
+            "Received unexpected song data"
+        )
+
+    def test_add_duplicate_song_for_different_artist(self):
+        new_song_node_id = self.kb_api.add_song("Despacito", "Justin Timberlake")
+        self.assertNotEqual(new_song_node_id, None, "Failed to add song 'Despacito' by artist 'Justin Timberlake' to knowledge base.")
+
+        res = self.kb_api.get_song_data("Despacito")
+        self.assertEqual(len(res), 2, "Expected exactly one match for song 'Despacito'.")
+
+        artists = set([res[0]["artist_name"], res[1]["artist_name"]])
+        self.assertEqual(artists, set(["Justin Bieber", "Justin Timberlake"]),
+            "Expected to find duplicate artists 'Justin Bieber' and 'Justin Timberlake' for song 'Despacito')")
+
+    def test_reject_add_song_already_exists(self):
+        res = self.kb_api.add_song("Despacito", "Justin Bieber")
+        self.assertEqual(res, None, "Expected rejection of attempt to add song 'Despacito' by 'Justin Bieber' to knowledge base.")
 
     # The logic tested here is currently implemented in the KR API
     # However, if it is moved to the schema (e.g. trigger functions),
     # then this test can be moved to the schema test module
     def test_new_song_with_unknown_artist_rejected(self):
         res = self.kb_api.add_song("Song by Unknown Artist", "Unknown artist")
-        self.assertEqual(res, False, "Expected song with unknown artist to be rejected")
+        self.assertEqual(res, None, "Expected song with unknown artist to be rejected")
 
-        res = self.kb_api.get_node_ids_by_entity_type("Song by Unknown Artist")
-        self.assertTrue("song" not in res,
+        res = self.kb_api.get_song_data("Song by Unknown Artist")
+        self.assertEqual(len(res), 0,
             "Insertion of song with unknown artist should not have been added to nodes table")
 
-    def test_contains_entity(self):
+    def test_add_genre(self):
+        node_id = self.kb_api.add_genre("hip hop")
+        self.assertEqual(type(node_id), int,
+            "Genre addition appears to have failed: expected int return value (node id) on valid attempt to add genre.")
+
+        res = self.kb_api.add_genre("hip hop")
+        self.assertEqual(res, node_id, "Expected original node id to be fetched when attempting to add duplicate genre.")
+
+    def test_add_genre_creates_node(self):
+        res = self.kb_api.add_genre("hip hop")
+        self.assertEqual(type(res), int,
+            "Genre addition appears to have failed: expected int return value (node id) on valid attempt to add genre.")
+
+        entities = self.kb_api.get_node_ids_by_entity_type("hip hop")
+        self.assertIn("genre", entities, "Expected to find node associated with genre 'hip hop'.")
+
+    def test_get_node_ids_by_entity_type(self):
         res = self.kb_api.get_node_ids_by_entity_type("Justin Timberlake")
         self.assertTrue("artist" in res,
             "Expected to find an 'artist' entity with name 'Justin Timberlake', but got: {0}".format(res))

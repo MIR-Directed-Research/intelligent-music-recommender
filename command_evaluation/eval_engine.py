@@ -170,7 +170,7 @@ class EvalEngine:
                                 ):
         similar_entities = []
         for e in subjects:
-            similar_entities += self.kb_api.get_similar_entities(e)
+            similar_entities += self.kb_api.get_related_entities(e)
 
         if not similar_entities:
             self.player.respond("I'm sorry, I couldn't find that for you.")
