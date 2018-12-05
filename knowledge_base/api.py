@@ -26,38 +26,46 @@ class KnowledgeBaseAPI:
         conn.execute("PRAGMA foreign_keys = 1")
         return conn
 
-    def get_similar_entities(self, entity_name):
-        """ Finds all entities similar to a given entity.
+    def get_related_entities(self, entity_name, rel_str="similar to"):
+        """Finds all entities connected to the given entity in the semantic network.
 
-        An entity may be a song, an artist, etc.
+        The given entity may be any of song, an artist, etc. The returned entity may or may not be
+        the same type of entity.
+
+        A warning is issued if the given rel_str not one of the 'approved' ones.
 
         Params:
             entity_name (string): name of entity (e.g. "Justin Bieber").
+            rel_str (string): e.g. "similar to", "of genre".
+
         Returns:
             (list of strings): names of entities related to given entity.
             e.g. ["Justin Timberlake", "Shawn Mendes"]
         """
+        if rel_str not in self.approved_relations.values():
+            print("WARN: querying for invalid relations. Only allow: {}".format(self.approved_relations))
+
         try:
             with closing(self.connection) as con:
                 # Auto-commit
                 with con:
                     with closing(con.cursor()) as cursor:
-                        # Inner query retrieves IDs of all similar entities
+                        # Inner query retrieves IDs of all related entities
                         cursor.execute("""
                             SELECT name
                             FROM nodes
                             WHERE id IN (
                                 SELECT dest
                                 FROM edges JOIN nodes ON source == id
-                                WHERE name = (?) AND rel == "similar to"
+                                WHERE name = (?) AND rel == (?)
                             );
-                        """, (entity_name,))
+                        """, (entity_name, rel_str))
                         # [("Justin Timberlake",), ("Shawn Mendes",)] => ["Justin Timberlake", "Shawn Mendes"]
                         return [x[0] for x in cursor.fetchall()]
 
         except sqlite3.OperationalError as e:
             print("ERROR: Could not find entities similar to entity with name '{}': {}".format(entity_name, str(e)))
-            return None
+            return []
 
     def get_song_data(self, song_name):
         """Gets all songs that match given name, along with their artists.
@@ -65,8 +73,14 @@ class KnowledgeBaseAPI:
         Returns:
             (list of dicts): each dict contains song_name and artist_name keys. Empty if not matches found.
                 e.g. [
-                    {"song_name": "Despacito", "artist_name": "Justin Bieber"},
-                    {"song_name": "Despacito", "artist_name": "Justin Timberlake"},
+                    {
+                        id: 1,
+                        song_name: "Despacito",
+                        artist_name: "Justin Bieber",
+                        duration_ms: 11111,
+                        popularity: 100,
+                    },
+                    ...
                 ]
         """
         try:
@@ -77,18 +91,69 @@ class KnowledgeBaseAPI:
                     # Auto-close.
                     with closing(con.cursor()) as cursor:
                         cursor.execute("""
-                        SELECT song.name, artist.name
-                        FROM (
-                            SELECT name, main_artist_id
-                            FROM songs JOIN nodes ON node_id == id
-                            WHERE name == (?)
-                        ) AS song JOIN nodes AS artist ON main_artist_id == id;
+                            SELECT song.name, artist.name, song.duration_ms, song.popularity, song_id
+                            FROM (
+                                SELECT name, main_artist_id, duration_ms, popularity, id as song_id
+                                FROM songs JOIN nodes ON node_id == id
+                                WHERE name == (?)
+                            ) AS song JOIN nodes AS artist ON main_artist_id == id;
                         """, (song_name,))
-                        return [dict(song_name=x[0], artist_name=x[1]) for x in cursor.fetchall()]
+                        return [
+                            dict(
+                                song_name=x[0],
+                                artist_name=x[1],
+                                duration_ms=x[2],
+                                popularity=x[3],
+                                id=x[4],
+                            ) for x in cursor.fetchall()
+                        ]
 
         except sqlite3.OperationalError as e:
             print("ERROR: Could not retrieve data for song with name '{}': {}".format(song_name, str(e)))
-            return None
+            return []
+
+    def get_artist_data(self, artist_name):
+        """Get artist info.
+
+        Params:
+            artist_name (string): e.g. "Justin Bieber".
+
+        Returns:
+            (list of dict): keys: id, name, num_spotify_followers, genres. Empty if no matching artists found.
+                e.g. [{
+                    genres=['Pop'],
+                    id=1,
+                    num_spotify_followers=4000,
+                    name="Justin Bieber",
+                }, ...]
+        """
+        try:
+            # Auto-close.
+            with closing(self.connection) as con:
+                # Auto-commit
+                with con:
+                    # Auto-close.
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            SELECT id, name, num_spotify_followers
+                            FROM artists JOIN nodes ON node_id == id
+                            WHERE name == (?);
+                        """, (artist_name,))
+                        res_tuples = cursor.fetchall()
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not retrieve data for artist with name '{}': {}".format(artist_name, str(e)))
+            return []
+
+        results = []
+        for res_tuple in res_tuples:
+            results.append(dict(
+                id=res_tuple[0],
+                name=res_tuple[1],
+                num_spotify_followers=res_tuple[2],
+                genres=self.get_related_entities(artist_name, self.approved_relations["genre"]),
+            ))
+        return results
 
     def get_songs(self, artist):
         """Retrieves list of songs for given artist.
@@ -181,6 +246,7 @@ class KnowledgeBaseAPI:
                         return [x[0] for x in cursor.fetchall()]
         except sqlite3.OperationalError as e:
             print("ERROR: Could not retrieve music entities: {}".format(e))
+            return []
 
     def _get_matching_node_ids(self, node_name):
         """Retrieves IDs of all nodes matching the given name.
