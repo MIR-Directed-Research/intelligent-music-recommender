@@ -104,12 +104,12 @@ class SpotifyClient():
             related_artists[hit["name"]] = dict(
                 ID=hit["id"],
                 genres=hit["genres"],
-                numFollowers=int(hit["followers"]["total"]),
+                num_followers=int(hit["followers"]["total"]),
             )
         return related_artists
 
-    def get_artist_id(self, artist):
-        """Retrieves the Spotify ID of specified artist.
+    def get_artist_data(self, artist):
+        """Retrieves summary data regarding specified artist.
 
         Naively resolves artist ambiguity by taking first result.
 
@@ -117,7 +117,12 @@ class SpotifyClient():
             artist (string): e.g. "Justin Bieber"
 
         Returns:
-            (string): Spotify's artist ID; None if search failed or rendered no results.
+            (dict): keys: id, num_followers, genres. None if search failed or rendered no results.
+                e.g. {
+                    id=1uNFoZAHBGtllmzznpCI3s,
+                    num_followers=25683438,
+                    genres=["canadian pop", "dance pop", "pop", "post-teen pop"]
+                }
         """
         params = dict(q=artist, type="artist")
         headers = self.set_token_in_auth_header(dict())
@@ -143,7 +148,11 @@ class SpotifyClient():
             print("Could not find info for artist '{}'".format(artist))
             return None
 
-        return body["artists"]["items"][0]["id"]
+        return dict(
+            id=body["artists"]["items"][0]["id"],
+            num_followers=body["artists"]["items"][0]["followers"]["total"],
+            genres=body["artists"]["items"][0]["genres"],
+        )
 
     def get_top_songs(self, artist_ID, country_iso_code):
         """Retrieves metadata of the specified artist's top songs on Spotify.

@@ -85,7 +85,7 @@ def remove_db():
     test_db_path, _ = _get_path_prefixes()
     return subprocess.run(["rm", test_db_path+TEST_DB_NAME]).returncode == 0
 
-def get_artist_IDs(spotify, artists):
+def get_artist_data(spotify, artists):
     """
     Params:
         spotify (SpotifyClient): for making requests to Spotify web API.
@@ -93,35 +93,41 @@ def get_artist_IDs(spotify, artists):
             (e.g. list of strings, file with artist names on each line)
 
     Returns:
-        artist_by_id (dict): key is artist name, value is their Spotify ID.
-        e.g. {
-            "Raveena": '2kQnsbKnIiMahOetwlfcaS',
-            ...
-        }
+        artist_data (dict): key is artist name, value is a dict containing artist metadata.
+            e.g. {
+                "Justin Bieber": {
+                    id=1uNFoZAHBGtllmzznpCI3s,
+                    num_followers=25683438,
+                    genres=["canadian pop", "dance pop", "pop", "post-teen pop"]
+                }
+                ...
+            }
     """
-    artist_by_id = dict()
+    artist_data = dict()
     for tmp_artist_name in artists:
         tmp_artist_name = tmp_artist_name.strip()
-        tmp_ID = spotify.get_artist_id(tmp_artist_name)
-        if tmp_ID is not None:
-            artist_by_id[tmp_artist_name] = tmp_ID
-    return artist_by_id
+        data = spotify.get_artist_data(tmp_artist_name)
+        if data is not None:
+            artist_data[tmp_artist_name] = data
+    return artist_data
 
 def get_artist_metadata(spotify, artist_names):
     """Fetches metadata for each artists specified in stdin.
 
     Returns:
-        artist_metadata (dict): key is artist name, val is dict with:
-            Spotify ID, related artists, and songs.
+        full_artist_metadata (dict): key is artist name, val is dict with:
+            Spotify ID, genres, number of Spotify followers, related artists, and songs.
 
     e.g. {
         "Raveena": {
             'ID': '2kQnsbKnIiMahOetwlfcaS',
+            'genres': ['indie r&b'],
+            'num_followers': 19191,
             'related_artists': {
                 'Alextbh': {
                     'ID': '0kXDB5aeESWj5BD9TCLkMu',
                     'genres': ['indie r&b', 'malaysian indie'],
-                    'numFollowers': 19517
+                    'num_followers': 19517
                 },
                 ...
             },
@@ -138,28 +144,35 @@ def get_artist_metadata(spotify, artist_names):
         ...
 
     """
-    artist_ids = get_artist_IDs(spotify, artist_names)
-    artist_metadata = dict()
-    for artist, artist_ID in artist_ids.items():
-        artist_metadata[artist] = dict(
-            ID=artist_ID,
-            related_artists=spotify.get_related_artists(artist_ID),
-            songs=spotify.get_top_songs(artist_ID, "CA")
+    artist_summaries = get_artist_data(spotify, artist_names)
+    full_artist_metadata = dict()
+    for artist, artist_summary in artist_summaries.items():
+        full_artist_metadata[artist] = dict(
+            ID=artist_summary["id"],
+            num_followers=artist_summary["num_followers"],
+            genres=artist_summary["genres"],
+            related_artists=spotify.get_related_artists(artist_summary["id"]),
+            songs=spotify.get_top_songs(artist_summary["id"], "CA")
         )
-    return artist_metadata
+    return full_artist_metadata
 
 def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, artists):
     path_to_db = create_db()
     artist_metadata = get_artist_metadata(SpotifyClient(spotify_client_id, spotify_secret_key), artists)
     kb_api = KnowledgeBaseAPI(path_to_db)
     for artist_name, artist_info in artist_metadata.items():
-        kb_api.add_artist(artist_name)
+        kb_api.add_artist(artist_name, artist_info["genres"], artist_info["num_followers"])
 
-        for song_name, _ in artist_info["songs"].items():
-            kb_api.add_song(song_name, artist_name)
+        for song_name, song_info in artist_info["songs"].items():
+            kb_api.add_song(
+                song_name,
+                artist_name,
+                song_info["popularity"],
+                song_info["duration_ms"],
+            )
 
-        for rel_artist_name, _ in artist_info["related_artists"].items():
-            kb_api.add_artist(rel_artist_name)
+        for rel_artist_name, rel_artist_info in artist_info["related_artists"].items():
+            kb_api.add_artist(rel_artist_name, rel_artist_info["genres"], rel_artist_info["num_followers"])
             kb_api.connect_entities(artist_name, rel_artist_name, "similar to", 100)
             kb_api.connect_entities(rel_artist_name, artist_name, "similar to", 100)
     return path_to_db

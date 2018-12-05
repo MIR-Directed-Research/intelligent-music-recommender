@@ -22,13 +22,18 @@ CREATE TABLE edges(
     PRIMARY KEY (source, dest, rel)
 );
 
--- TODO: Create trigger functions to add to nodes + edges table
 CREATE TABLE artists(
-    node_id int PRIMARY KEY REFERENCES nodes(id) NOT NULL
+    node_id                 int PRIMARY KEY REFERENCES nodes(id) NOT NULL,
+    num_spotify_followers   int
 );
 
--- TODO: Create trigger functions to add to nodes + edges table
 CREATE TABLE songs(
     main_artist_id  int REFERENCES artists(node_id) NOT NULL,
+    popularity      int CHECK ((popularity >= 0 AND popularity <= 100) OR popularity = NULL),
+    duration_ms     int,
     node_id         int REFERENCES nodes(id) NOT NULL
+);
+
+CREATE TABLE genres(
+    node_id int REFERENCES nodes(id) NOT NULL
 );

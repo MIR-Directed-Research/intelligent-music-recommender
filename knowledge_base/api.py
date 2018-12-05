@@ -11,6 +11,10 @@ class KnowledgeBaseAPI:
 
     def __init__(self, dbName):
         self.dbName = dbName
+        self.approved_relations = dict(
+            similarity="similar to",
+            genre="of genre",
+        )
 
     def __str__(self):
         return "Knowledge Representation API object for {} DB.".format(self.dbName)
@@ -222,13 +226,16 @@ class KnowledgeBaseAPI:
                 E.g. "Shawn Mendes"; "In My Blood"; "Pop"; etc.
 
             rel_str (string): Type of relationship, which must be already present in 'relations' table.
-                E.g. "similar to".
+                E.g. "similar to", "of genre".
 
             score (int): edge weight corresponding to percentage, must be [0,100] range.
 
         Returns:
             (bool): False if error occurred, True otherwise.
         """
+        if rel_str not in self.approved_relations.values():
+            print("WARN: adding unapproved relation. Only allow: {}".format(self.approved_relations))
+
         matching_src_nodes = self._get_matching_node_ids(source_node_name)
         matching_dst_nodes = self._get_matching_node_ids(dest_node_name)
         if len(matching_src_nodes) != 1 or len(matching_dst_nodes) != 1:
@@ -270,49 +277,63 @@ class KnowledgeBaseAPI:
             - Ideally, we would have a table in our database for valid entity types.
             - Also, using enums would probably be cleaner.
         """
-        return entity_type == "artist" or entity_type == "song"
+        return entity_type in ["artist", "song", "genre"]
 
-    def add_artist(self, name):
+    def add_artist(self, name, genres=[], num_spotify_followers=None):
         """Inserts given values into two tables: artists and nodes.
 
         Ensures that:
         - Given artist is only added if they are not already in the database.
         - Given artist is either added to both or neither.
 
+        Params:
+            name (string): e.g. "Justin Bieber"
+            genres (list): e.g. ['indie r&b', 'malaysian indie']
+            num_spotify_followers (int): number of Spotify followers.
+
         Returns:
-            (bool): True if artist added to both songs and nodes table; False otherwise.
+            (int): node_id corresponding to given artist if added or already existed; None otherwise.
         """
         matching_nodes = self.get_node_ids_by_entity_type(name).get("artist", [])
         if len(matching_nodes) > 0:
             print("WARN: Artist '{}' already exists in semantic network. Aborting insertion.".format(name))
-            return False
+            return matching_nodes[0]
 
         node_id = self._add_node(name, "artist")
         if node_id is None:
             print("ERROR: Failed to add artist '{}' to semantic network.".format(name))
-            return False
+            return None
 
         try:
             with closing(self.connection) as con:
                 with con:
                     with closing(con.cursor()) as cursor:
                         cursor.execute("""
-                            INSERT INTO artists (node_id) VALUES (?);
-                        """, (node_id,))
+                            INSERT INTO artists (node_id, num_spotify_followers) VALUES (?, ?);
+                        """, (node_id, num_spotify_followers))
 
         except sqlite3.OperationalError as e:
             print("ERROR: Could not add artist '{0}'".format(
                 name))
-            return False
+            return node_id
 
         except sqlite3.IntegrityError as e:
             print("ERROR: Could not add artist '{}' due to schema constraints: {}"
-                .format(artist_name, str(e)))
-            return False
+                .format(name, str(e)))
+            return node_id
 
-        return True
+        for genre in genres:
+            if self.add_genre(genre) is not None:
+                genre_rel_str = self.approved_relations["genre"]
+                if not self.connect_entities(name, genre, genre_rel_str, 100):
+                    print("ERROR: could not connect genre '{}' and artist '{}'".format(genre, name))
 
-    def add_song(self, name, artist):
+            else:
+                print("ERROR: Could not add genre '{}' for artist '{}'".format(genre, name))
+
+        return node_id
+
+    def add_song(self, name, artist, duration_ms=None, popularity=None):
         """Inserts given values into two tables: songs and nodes.
 
         Ensures that:
@@ -320,46 +341,92 @@ class KnowledgeBaseAPI:
             - Given artist is not ambiguous (only matches one 'artist' entry in nodes table).
             - Given tuple (song, artist) is only added if it does not already exist in database.
 
+        Params:
+            name (string): e.g. "Despacito"
+            artist (string): e.g. "Justin Bieber"
+            duration_ms (int): length of song e.g. 22222.
+            popularity (int): in [0,100] range.
+
         Returns:
-            (bool): True if song added to both songs and nodes table; False otherwise.
+            (int): node_id corresponding to song if added or already existed; None otherwise.
         """
         matching_artist_node_ids = self.get_node_ids_by_entity_type(artist).get("artist", [])
         if len(matching_artist_node_ids) != 1:
             print("ERROR: Failed to add song '{}' because given artist '{}' corresponded to {} IDs (need 1)."
                 .format(name, artist, len(matching_artist_node_ids)))
-            return False
+            return None
         artist_node_id = matching_artist_node_ids[0]
 
         existing_songs = self.get_song_data(name)
         for tmp_song in existing_songs:
             if tmp_song["artist_name"] == artist:
                 print("WARN: Song '{}' by artist '{}' already exists in semantic network. Aborting insertion.".format(name, artist))
-                return False
+                return None
 
         node_id = self._add_node(name, "song")
         if node_id is None:
             print("ERROR: Failed to add song '{}' due to an error.".format(name))
-            return False
+            return None
 
         try:
             with closing(self.connection) as con:
                 with con:
                     with closing(con.cursor()) as cursor:
                         cursor.execute("""
-                            INSERT INTO songs (main_artist_id, node_id) VALUES (?, ?);
-                        """, (artist_node_id, node_id,))
+                            INSERT INTO songs (main_artist_id, node_id, duration_ms, popularity)
+                            VALUES (?, ?, ?, ?);
+                        """, (artist_node_id, node_id, duration_ms, popularity))
 
         except sqlite3.OperationalError as e:
             print("ERROR: Could not add song '{}' with artist '{}'".format(
                 name, artist))
-            return False
+            return node_id
 
         except sqlite3.IntegrityError as e:
             print("ERROR: Could not add song '{}' with artist '{}' due to schema constraints: {}"
                 .format(name, artist, str(e)))
-            return False
+            return node_id
 
-        return True
+        return node_id
+
+    def add_genre(self, name):
+        """Adds given value into two tables: genres and nodes.
+
+        Ensures that:
+        - Given genre is eiter added to both or neither.
+        - Given genre is only added if not already in the database.
+
+        Returns:
+            (int): node_id if genre was added or it already existed; None otherwise (e.g. error occurred).
+        """
+        matching_nodes = self.get_node_ids_by_entity_type(name).get("genre", [])
+        if len(matching_nodes) > 0:
+            print("WARN: Genre '{}' already exists in semantic network. Aborting insertion.".format(name))
+            return matching_nodes[0]
+
+        node_id = self._add_node(name, "genre")
+        if node_id is None:
+            print("ERROR: Failed to add genre '{}' to semantic network.".format(name))
+            return None
+
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            INSERT INTO genres (node_id) VALUES (?);
+                        """, (node_id,))
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: Could not add artist '{0}'".format(
+                name))
+            return None
+
+        except sqlite3.IntegrityError as e:
+            print("ERROR: Could not add genre '{}' due to schema constraints: {}"
+                .format(name, str(e)))
+            return None
+        return node_id
 
     def _add_node(self, entity_name, entity_type):
         """Adds given entity to knowledge representation system.
