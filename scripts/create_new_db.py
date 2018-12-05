@@ -61,8 +61,8 @@ def main():
 
     parser = ArgumentParser()
     parser.add_argument("-d", type=str, dest="db_path",
-                        help=" Specifies a relative path to the DB, including "
-                             "DB name. Ex: -p ./new_db.sql")
+                        help=" Specifies a relative path to the DB, (include "
+                             "the filename). Ex: -d ./new_db.sql")
     parser.add_argument("-s", type=str, nargs='*', dest="spotify_creds",
                         help=" Pulls data from Spotify, requires Spotify_client_id and"
                              " spotify_secret_key  "
