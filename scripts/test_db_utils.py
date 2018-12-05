@@ -1,28 +1,26 @@
 import os
 import pprint
-import sqlite3
 import subprocess
 import sys
 
-
 sys.path.append('../')  # if running this script from 'scripts/' directory
-sys.path.append('.')    # if running this script from project root
-sys.path.append('./scripts')    # if running this script from project root
+sys.path.append('.')  # if running this script from project root
+sys.path.append('./scripts')  # if running this script from project root
 from knowledge_base.api import KnowledgeBaseAPI
 from spotify_client import SpotifyClient
 
 pp = pprint.PrettyPrinter(
     indent=2,
-    depth=2,        # hide items nested past 3 levels
-    compact=True,   # fit as many items into a single line as possible
+    depth=2,  # hide items nested past 3 levels
+    compact=True,  # fit as many items into a single line as possible
 )
-
 
 TEST_DB_NAME = "test.db"
 SCHEMA_FILE_NAME = "schema.sql"
 TEST_DATA_FILE_NAME = "test_data.sql"
 
-def exec_sql_script(path_prefix, path_to_sql_file):
+
+def exec_sql_script(db_path, path_to_sql_file, DB_name: str = None):
     """Equivalent to running the following command in terminal:
         $ sqlite3 path_to_test_db_file < schema_file.sql
 
@@ -31,22 +29,27 @@ def exec_sql_script(path_prefix, path_to_sql_file):
         path_to_sql_file (string): path to sql script.
     """
     with open(path_to_sql_file) as f:
-        subprocess.run(["sqlite3", path_prefix+TEST_DB_NAME], stdin=f)
+        subprocess.run(["sqlite3", db_path], stdin=f)
 
-def create_and_populate_db():
-    """Creates and fills sqlite database, saving .db file to 'tests/' directory
 
-    Tries to find SQL scripts depending on where this module is invoked from.
+def create_and_populate_db(path: str = None):
+    """Creates and fills sqlite database, saving .db file to 'tests/'
+   directory, unless another path is specified.
 
-    Returns:
-        (string): (relative) path to newly created .db file.
-    """
+   Tries to find SQL scripts depending on where this module is invoked from.
+
+   Returns:
+       (string): (relative) path to newly created .db file.
+   """
     test_db_path_prefix, scripts_path_prefix = _get_path_prefixes()
-    exec_sql_script(test_db_path_prefix, scripts_path_prefix + SCHEMA_FILE_NAME)
-    exec_sql_script(test_db_path_prefix, scripts_path_prefix + TEST_DATA_FILE_NAME)
-    return test_db_path_prefix + TEST_DB_NAME
+    db_path = path or (test_db_path_prefix + TEST_DB_NAME)
 
-def create_db():
+    exec_sql_script(db_path, scripts_path_prefix + SCHEMA_FILE_NAME)
+    exec_sql_script(db_path, scripts_path_prefix + TEST_DATA_FILE_NAME)
+    return db_path
+
+
+def create_db(path: str = None):
     """Creates sqlite db file, saving it to 'tests/' directory.
 
     NOTE: copy+paste (near) duplicate of create_and_populate_db.
@@ -57,8 +60,11 @@ def create_db():
         (string): (relative) path to newly created .db file.
     """
     test_db_path_prefix, scripts_path_prefix = _get_path_prefixes()
-    exec_sql_script(test_db_path_prefix, scripts_path_prefix + SCHEMA_FILE_NAME)
-    return test_db_path_prefix + TEST_DB_NAME
+    db_path = path or (test_db_path_prefix + TEST_DB_NAME)
+
+    exec_sql_script(db_path, scripts_path_prefix + SCHEMA_FILE_NAME)
+    return db_path
+
 
 def _get_path_prefixes():
     # Used for adjusting path based on where the script is run from.
@@ -80,10 +86,12 @@ def _get_path_prefixes():
         scripts_path_prefix = "scripts/"
     return test_db_path_prefix, scripts_path_prefix
 
+
 def remove_db():
     "Returns True if command succeeded, False otherwise."
     test_db_path, _ = _get_path_prefixes()
-    return subprocess.run(["rm", test_db_path+TEST_DB_NAME]).returncode == 0
+    return subprocess.run(["rm", test_db_path + TEST_DB_NAME]).returncode == 0
+
 
 def get_artist_data(spotify, artists):
     """
@@ -110,6 +118,7 @@ def get_artist_data(spotify, artists):
         if data is not None:
             artist_data[tmp_artist_name] = data
     return artist_data
+
 
 def get_artist_metadata(spotify, artist_names):
     """Fetches metadata for each artists specified in stdin.
@@ -156,8 +165,9 @@ def get_artist_metadata(spotify, artist_names):
         )
     return full_artist_metadata
 
-def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, artists):
-    path_to_db = create_db()
+
+def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, artists, path=None):
+    path_to_db = create_db(path=path)
     artist_metadata = get_artist_metadata(SpotifyClient(spotify_client_id, spotify_secret_key), artists)
     kb_api = KnowledgeBaseAPI(path_to_db)
     for artist_name, artist_info in artist_metadata.items():
@@ -176,6 +186,7 @@ def create_and_populate_db_with_spotify(spotify_client_id, spotify_secret_key, a
             kb_api.connect_entities(artist_name, rel_artist_name, "similar to", 100)
             kb_api.connect_entities(rel_artist_name, artist_name, "similar to", 100)
     return path_to_db
+
 
 def main():
     print("Enter Spotify client ID:")

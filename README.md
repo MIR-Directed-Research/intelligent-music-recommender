@@ -8,6 +8,9 @@ Before you can run the alpha version of our app or the tests, you must:
 * Install Python 3.5
 * Install the project dependencies: `pip install -r requirements.txt`
 
+For a detailed description of setup for development purposes, please 
+see the [wiki page](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing.).
+
 ## Running the Alpha App
 First, follow the instructions in the prerequisites section. Then, from the project root, run `python view/cli.py`, which will open a simple command line interface that behaves like a primitive conversational agent. It demonstrates the basic functionality that we've implemented so far, which includes:
 * Parsing and interpreting natural language input from a user
@@ -40,26 +43,12 @@ Can you play artists like Justin Bieber?
 Playing: ['Justin Timberlake', 'Shawn Mendes']
 ```
 
-### With Spotify Data
-If you provide a Spotify client ID and secret as runtime arguments (in that order) to `cli.py`, then it will use them to pull actual data from Spotify. Getting these credentials requires signing up for a Spotify developer account and registering an application. (You could crack open `cli.py` to customize the artists for which data is retrieved!)
+More information about configuring the CLI can be found in the [wiki](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing).
 
-```
-$ python view/cli.py <SPOTIFY_CLIENT_ID> <SPOTIFY_SECRET_KEY>
-Initializing app...
-Running app...
-Welcome!
-
-Hi
-Response: Hi there! Ask me to play artists or songs. I can also find songs that are similar to other artists.
-
-Play someone like Ariana Grande
-Playing: ['Troye Sivan', 'Taylor Swift', 'Miley Cyrus', 'Selena Gomez & The Scene', 'Hailee Steinfeld', 'Zara Larsson', 'DNCE', 'Alessia Cara', 'Madison Beer', 'Rita Ora', 'Fifth Harmony', 'Camila Cabello', 'Carly Rae Jepsen', 'Selena Gomez', 'Demi Lovato', 'Halsey', 'Little Mix', 'Julia Michaels', 'Dua Lipa', 'ZAYN']
-```
-
-## Test Environment
+## Running The Tests
 First, follow the instructions in the prerequisites section. From the project root directory: `python run_tests.py`.
 
 ## Contributing
 Please [see wiki](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing) for info on:
-* git branching workflow
-* virtual environments
+* [git branching workflow](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing#git-workflow)
+* [virtual environments](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing#virtualenv)
