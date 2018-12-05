@@ -17,14 +17,15 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
     def test_get_song_data(self):
         res = self.kb_api.get_song_data("Despacito")
         # we don't care what the node ID is
-        self.assertEqual(
-            res, ('Despacito', 'Justin Bieber'),
-            "Queried song data did not match expected.",
-        )
+        self.assertEqual(1, len(res), "Expected exactly one result from query for song 'Despacito'.")
+        self.assertIn("song_name", res[0], "Expected to find 'song_name' field in result")
+        self.assertIn("artist_name", res[0], "Expected to find 'artist_name' field in result")
+        self.assertIn(res[0]["song_name"], "Despacito", "Expected to find 'Despacito' for field 'song_name'.")
+        self.assertIn(res[0]["artist_name"], "Justin Bieber", "Expected to find 'Justin Bieber' for field 'artist_name'")
 
     def test_get_song_data_dne(self):
         res = self.kb_api.get_song_data("Not In Database")
-        self.assertEqual(res, None, "Expected 'None' result for queried song not in DB.")
+        self.assertEqual(res, [], "Expected empty list of results for queried song not in DB.")
 
     def test_find_similar_song(self):
         res = self.kb_api.get_similar_entities("Despacito")
@@ -131,13 +132,33 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         self.assertTrue("artist" in res,
             "Expected to find an 'artist' entity with name 'Heart', but got: {0}".format(res))
 
+    def test_reject_add_artist_already_exists(self):
+        res = self.kb_api.add_artist("Justin Bieber")
+        self.assertEqual(res, False, "Expected rejection of attempt to add artist 'Justin Bieber' to knowledge base.")
+
     def test_add_song(self):
         res = self.kb_api.add_song("Heart", "Justin Bieber")
         self.assertEqual(res, True, "Failed to add song 'Heart' by artist 'Justin Bieber' to knowledge base.")
 
         res = self.kb_api.get_node_ids_by_entity_type("Heart")
-        self.assertTrue("song" in res,
-            "Expected to find an 'song' entity with name 'Heart', but got: {0}".format(res))
+        self.assertIn("song", res,
+            "Expected to find 'song' entities with name 'Heart', but got: {0}".format(res))
+        self.assertEqual(len(res["song"]), 1,
+            "Expected to find exactly one 'song' entity with name 'Heart', but got: {0}".format(res))
+
+    def test_add_duplicate_song_for_different_artist(self):
+        res = self.kb_api.add_song("Despacito", "Justin Timberlake")
+        self.assertEqual(res, True, "Failed to add song 'Despacito' by artist 'Justin Timberlake' to knowledge base.")
+
+        res = self.kb_api.get_node_ids_by_entity_type("Despacito")
+        self.assertIn("song", res,
+            "Expected to find 'song' entities with name 'Despacito', but got: {0}".format(res))
+
+        self.assertEqual(len(res["song"]), 2, "Expected to find duplicate 'song' entity with name 'Despacito', but got: {0}".format(res["song"]))
+
+    def test_reject_add_song_already_exists(self):
+        res = self.kb_api.add_song("Despacito", "Justin Bieber")
+        self.assertEqual(res, False, "Expected rejection of attempt to add song 'Despacito' by 'Justin Bieber' to knowledge base.")
 
     # The logic tested here is currently implemented in the KR API
     # However, if it is moved to the schema (e.g. trigger functions),

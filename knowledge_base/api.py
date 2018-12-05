@@ -56,6 +56,15 @@ class KnowledgeBaseAPI:
             return None
 
     def get_song_data(self, song_name):
+        """Gets all songs that match given name, along with their artists.
+
+        Returns:
+            (list of dicts): each dict contains song_name and artist_name keys. Empty if not matches found.
+                e.g. [
+                    {"song_name": "Despacito", "artist_name": "Justin Bieber"},
+                    {"song_name": "Despacito", "artist_name": "Justin Timberlake"},
+                ]
+        """
         try:
             # Auto-close.
             with closing(self.connection) as con:
@@ -71,7 +80,8 @@ class KnowledgeBaseAPI:
                             WHERE name == (?)
                         ) AS song JOIN nodes AS artist ON main_artist_id == id;
                         """, (song_name,))
-                        return cursor.fetchone()
+                        return [dict(song_name=x[0], artist_name=x[1]) for x in cursor.fetchall()]
+
         except sqlite3.OperationalError as e:
             print("ERROR: Could not retrieve data for song with name '{}': {}".format(song_name, str(e)))
             return None
@@ -224,11 +234,18 @@ class KnowledgeBaseAPI:
     def add_artist(self, name):
         """Inserts given values into two tables: artists and nodes.
 
-        Ensures that given artist is either added to both or neither.
+        Ensures that:
+        - Given artist is only added if they are not already in the database.
+        - Given artist is either added to both or neither.
 
         Returns:
             (bool): True if artist added to both songs and nodes table; False otherwise.
         """
+        matching_nodes = self.get_node_ids_by_entity_type(name).get("artist", [])
+        if len(matching_nodes) > 0:
+            print("WARN: Artist '{}' already exists in semantic network. Aborting insertion.".format(name))
+            return False
+
         node_id = self._add_node(name, "artist")
         if node_id is None:
             print("ERROR: Failed to add artist '{}' to semantic network.".format(name))
@@ -260,6 +277,7 @@ class KnowledgeBaseAPI:
         Ensures that:
             - Given song is either added to both or neither.
             - Given artist is not ambiguous (only matches one 'artist' entry in nodes table).
+            - Given tuple (song, artist) is only added if it does not already exist in database.
 
         Returns:
             (bool): True if song added to both songs and nodes table; False otherwise.
@@ -270,6 +288,12 @@ class KnowledgeBaseAPI:
                 .format(name, artist, len(matching_artist_node_ids)))
             return False
         artist_node_id = matching_artist_node_ids[0]
+
+        existing_songs = self.get_song_data(name)
+        for tmp_song in existing_songs:
+            if tmp_song["artist_name"] == artist:
+                print("WARN: Song '{}' by artist '{}' already exists in semantic network. Aborting insertion.".format(name, artist))
+                return False
 
         node_id = self._add_node(name, "song")
         if node_id is None:
