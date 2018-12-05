@@ -27,6 +27,17 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         res = self.kb_api.get_song_data("Not In Database")
         self.assertEqual(res, [], "Expected empty list of results for queried song not in DB.")
 
+    def test_get_songs(self):
+        res = self.kb_api.get_songs("Justin Bieber")
+        self.assertEqual(res, ["Despacito", "Sorry"], "Songs retrieved for 'Justin Bieber' did not match expected.")
+
+        res = self.kb_api.get_songs("Justin Timberlake")
+        self.assertEqual(res, ["Rock Your Body"], "Songs retrieved for 'Justin Timberlake' did not match expected.")
+
+    def test_get_songs_unknown_artist(self):
+        res = self.kb_api.get_songs("Unknown artist")
+        self.assertEqual(res, None, "Unexpected songs retrieved for unknown artist.")
+
     def test_find_similar_song(self):
         res = self.kb_api.get_similar_entities("Despacito")
         self.assertEqual(

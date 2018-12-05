@@ -12,8 +12,10 @@ INSERT INTO nodes VALUES ("Despacito", "song", 10);
 INSERT INTO nodes VALUES ("Rock Your Body", "song", 11);
 INSERT INTO nodes VALUES ("Beautiful Day", "song", 12);
 INSERT INTO nodes VALUES ("In My Blood", "song", 13);
+INSERT INTO nodes VALUES ("Sorry", "song", 14);
 
 INSERT INTO songs VALUES (1, 10);
+INSERT INTO songs VALUES (1, 14);
 INSERT INTO songs VALUES (2, 11);
 INSERT INTO songs VALUES (3, 12);
 INSERT INTO songs VALUES (4, 13);

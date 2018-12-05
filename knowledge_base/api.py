@@ -86,6 +86,47 @@ class KnowledgeBaseAPI:
             print("ERROR: Could not retrieve data for song with name '{}': {}".format(song_name, str(e)))
             return None
 
+    def get_songs(self, artist):
+        """Retrieves list of songs for given artist.
+
+        Param:
+            artist (string): e.g. "Justin Bieber"
+
+        Returns:
+            (list of strings): song names by given artist. None if artist is ambiguous or not found.
+                e.g. ["Despacito", "Sorry"]
+        """
+        matching_artist_node_ids = self._get_matching_node_ids(artist)
+        if len(matching_artist_node_ids) == 0:
+            print("ERROR: could not find entry for artist '{}'".format(artist))
+            return None
+
+        elif len(matching_artist_node_ids) > 1:
+            print("ERROR: found multiple entries for ambiguous artist name '{}'.".format(artist))
+            return None
+
+        artist_node_id = matching_artist_node_ids[0]
+        try:
+            with closing(self.connection) as con:
+                with con:
+                    with closing(con.cursor()) as cursor:
+                        cursor.execute("""
+                            SELECT name
+                            FROM (
+                                SELECT songs.node_id as node_id
+                                FROM songs JOIN artists ON main_artist_id = artists.node_id
+                                WHERE artists.node_id = (?)
+                            ) as x JOIN nodes ON x.node_id = id;
+                        """, (artist_node_id,))
+
+                        # unpack tuples e.g. [("Despacito",)] => ["Despacito"]
+                        return [x[0] for x in cursor.fetchall()]
+
+        except sqlite3.OperationalError as e:
+            print("ERROR: failed to find songs for artist '{0}'".format(
+                name))
+            return None
+
     def get_node_ids_by_entity_type(self, entity_name):
         """Retrieves and organizes IDs of all nodes that match given entity name.
 
