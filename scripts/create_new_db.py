@@ -3,10 +3,10 @@ This is an executable script that creates and saves
 a new DB.
 
 Example:
-    python3 populate_db.py -d ./some_new_db.sql
+    python3 populate_db.py -d ./knowledge_base/knowledge_base.db
 
     # With Spotify Credentials:
-    python3 populate_db.py -d ./some_new_db.sql -s 1231231 12312312
+    python3 populate_db.py -d ./knowledge_base/knowledge_base.db -s 123 123
 
 """
 
