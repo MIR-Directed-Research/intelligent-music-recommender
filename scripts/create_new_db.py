@@ -78,20 +78,26 @@ def main():
 
     if args.spotify_creds:
         try:
-            spotify_client_id = int(args.spotify_creds[0])
-            spotify_secret_key = int(args.spotify_creds[1])
+            spotify_client_id = args.spotify_creds[0]
+            spotify_secret_key = args.spotify_creds[1]
 
-        except Exception:
+        except Exception as e:
             print("Error, incorrect Spotify key format. "
                   "\nEx:"
-                  "\n\tpython3 populate_db.py -d ./some_new_db.sql -s 1231231 12312312",
+                  "\n\tpython3 populate_db.py -d ./some_new_db.sql -s 1231231 12312312"
+                  "\n{}".format(e),
                   file=sys.stdout)
             sys.exit()
 
-        test_artists = ["Raveena", "Ariana Grande", "U2"]
+        test_artists = [
+                "Raveena", "Ariana Grande", "U2",
+                "Justin Timberlake", "Justin Bieber",
+                "Shawn Mendes",
+        ]
         setup_db_with_spotify_data(spotify_client_id,
                                    spotify_secret_key,
                                    test_artists,
+                                   db_path=db_path,
                                    )
     else:
         setup_db(db_path)
