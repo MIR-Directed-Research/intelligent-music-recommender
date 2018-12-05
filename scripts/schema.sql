@@ -13,18 +13,11 @@ CREATE TABLE nodes(
     id INTEGER PRIMARY KEY
 );
 
-CREATE TABLE relations(
-    -- e.g. "similar to"
-    type        varchar(40) NOT NULL PRIMARY KEY,
-    -- e.g. false for "similar to" relations, but true for
-    is_directed boolean NOT NULL
-);
-
 -- TODO: add constraints about node type (probably in a trigger function)
 CREATE TABLE edges(
     source  int NOT NULL REFERENCES nodes(id),
     dest    int NOT NULL REFERENCES nodes(id),
-    rel     varchar(40) NOT NULL REFERENCES relations(type),
+    rel     varchar(40) NOT NULL,
     score   real NOT NULL CHECK (score >= 0 AND score <= 100),
     PRIMARY KEY (source, dest, rel)
 );
@@ -39,5 +32,3 @@ CREATE TABLE songs(
     main_artist_id  int REFERENCES artists(node_id) NOT NULL,
     node_id         int REFERENCES nodes(id) NOT NULL
 );
-
-INSERT INTO relations (type, is_directed) VALUES ("similar to", false);

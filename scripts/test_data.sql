@@ -18,7 +18,7 @@ INSERT INTO songs VALUES (2, 11);
 INSERT INTO songs VALUES (3, 12);
 INSERT INTO songs VALUES (4, 13);
 
--- * Define some edges+relations for testing
+-- * Define some edges for testing
 -- -------------------------------
 -- Justin Bieber is similar to Justin Timberlake and Shawn Mendes
 INSERT INTO edges VALUES (1, 2, "similar to", 75);
@@ -27,7 +27,6 @@ INSERT INTO edges VALUES (1, 4, "similar to", 100);
 -- "Despacito" is similar to "Rock Your Body"
 INSERT INTO edges VALUES (10, 11, "similar to", 100);
 
-INSERT INTO relations VALUES ("other relation", false);
 -- Justin Bieber and U2 are related in some unimportant way
 INSERT INTO edges VALUES (1, 3, "other relation", 50);
 -- "Despacito" and "Beautiful Day" are related in some unimportant way
