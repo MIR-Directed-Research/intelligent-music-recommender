@@ -112,7 +112,14 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
     def test_get_matching_node_ids(self):
         node_ids = self.kb_api._get_matching_node_ids("Justin Bieber")
         self.assertEqual(len(node_ids), 1,
-            "Expected to find exactly one node id for 'Justin Bieber', but got: {}"
+            "Expected to find exactly one matching node for 'Justin Bieber', but got: {}"
+                .format(node_ids)
+        )
+
+    def test_get_matching_node_ids_empty(self):
+        node_ids = self.kb_api._get_matching_node_ids("Unknown artist")
+        self.assertEqual(len(node_ids), 0,
+            "Expected to find no matching node for 'Unknown artist', but got: {}"
                 .format(node_ids)
         )
 

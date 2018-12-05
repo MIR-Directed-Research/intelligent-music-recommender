@@ -128,7 +128,7 @@ class KnowledgeBaseAPI:
             print("ERROR: Could not retrieve music entities: {}".format(e))
 
     def _get_matching_node_ids(self, node_name):
-        """Retrieves IDs of all node matching the given name.
+        """Retrieves IDs of all nodes matching the given name.
 
         Params:
             node_name (string): name of entity node. E.g. "Justin Bieber".
@@ -178,18 +178,18 @@ class KnowledgeBaseAPI:
         Returns:
             (bool): False if error occurred, True otherwise.
         """
-        candidate_source_ids = self._get_matching_node_ids(source_node_name)
-        candidate_dest_ids = self._get_matching_node_ids(dest_node_name)
-        if len(candidate_source_ids) != 1 or len(candidate_dest_ids) != 1:
+        matching_src_nodes = self._get_matching_node_ids(source_node_name)
+        matching_dst_nodes = self._get_matching_node_ids(dest_node_name)
+        if len(matching_src_nodes) != 1 or len(matching_dst_nodes) != 1:
             print("ERROR: Could not find unique match for entities '{}', '{}'. Found {}, {} matches respectively" .format(
                 source_node_name,
                 dest_node_name,
-                len(candidate_source_ids),
-                len(candidate_dest_ids)),
+                len(matching_src_nodes),
+                len(matching_dst_nodes)),
             )
             return False
 
-        source_node_id, dest_node_id = candidate_source_ids[0], candidate_dest_ids[0]
+        source_node_id, dest_node_id = matching_src_nodes[0], matching_dst_nodes[0]
 
         try:
             with closing(self.connection) as conn:
