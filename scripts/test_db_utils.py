@@ -7,7 +7,7 @@ sys.path.append('../')  # if running this script from 'scripts/' directory
 sys.path.append('.')  # if running this script from project root
 sys.path.append('./scripts')  # if running this script from project root
 from knowledge_base.api import KnowledgeBaseAPI
-from spotify_client import SpotifyClient
+from scripts.spotify_client import SpotifyClient
 
 pp = pprint.PrettyPrinter(
     indent=2,
