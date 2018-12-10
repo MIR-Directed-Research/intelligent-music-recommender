@@ -3,7 +3,7 @@ from functools import lru_cache
 
 import nltk
 
-from command_evaluation.eval_engine import EvalEngine
+from command_evaluation.tree_eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
 from tests.mock_objects import MockController
 
