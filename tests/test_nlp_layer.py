@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import MagicMock
 
-from command_evaluation.eval_engine import EvalEngine
+from command_evaluation.bag_of_words_eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
 from nlp.nlp_layer import NLP
 from tests.mock_objects import MockController
