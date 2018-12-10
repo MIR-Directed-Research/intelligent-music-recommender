@@ -23,7 +23,7 @@ class NLP:
         except LookupError:
             nltk.download('stopwords')
 
-        self.commands = keywords
+        self.unary_commands = keywords.get("unary")
         self.kb_api = KnowledgeBaseAPI(db_path)
         self.db_nouns = self.kb_api.get_all_music_entities()
 
@@ -31,7 +31,7 @@ class NLP:
         # Remove all keywords from stopwords
         stop_words = set(stopwords.words('english'))
         stop_words |= NLP.extra_stopwords
-        for _, words in self.commands.items():
+        for _, words in self.unary_commands.items():
             for word in words:
                 try:
                     stop_words.remove(word)
@@ -42,7 +42,7 @@ class NLP:
     def _gen_patterns(self):
         # Generate RegEx patterns from keywords
         patterns = {}
-        for intent, keys in self.commands.items():
+        for intent, keys in self.unary_commands.items():
             patterns[intent] = re.compile('|'.join(keys))
         return patterns
 
