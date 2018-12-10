@@ -43,7 +43,7 @@ class NLP:
         # Generate RegEx patterns from keywords
         patterns = {}
         for intent, keys in self.unary_commands.items():
-            patterns[intent] = re.compile('|'.join(keys))
+            patterns[intent] = re.compile(r'\b'+r'\b|\b'.join(keys)+r'\b')
         return patterns
 
     def __call__(self, msg: str):
