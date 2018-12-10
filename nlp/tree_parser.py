@@ -31,7 +31,7 @@ class TreeParser:
         patterns = {}
         for intent, keys in self.unary_commands.items():
             if keys:
-                patterns[intent] = re.compile('|'.join(keys))
+                patterns[intent] = re.compile(r'\b'+r'\b|\b'.join(keys)+r'\b')
         return patterns
 
     @property
