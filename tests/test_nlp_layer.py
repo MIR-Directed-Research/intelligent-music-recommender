@@ -1,12 +1,11 @@
-import os
 import unittest
 from unittest.mock import MagicMock
 
-from command_evaluation.bag_of_words_eval_engine import EvalEngine
+from command_evaluation.bag_of_words_eval_engine import BOWEvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
-from nlp.nlp_layer import NLP
-from tests.mock_objects import MockController
+from nlp.bag_of_words_parser import BOWParser
 from scripts import test_db_utils
+from tests.mock_objects import MockController
 
 
 class TestNLP(unittest.TestCase):
@@ -15,8 +14,8 @@ class TestNLP(unittest.TestCase):
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
         self.results_dict = {}
         self.player_controller = MockController(self.results_dict)
-        self.interactions = EvalEngine(self.DB_path, self.player_controller)
-        self.nlp = NLP(self.DB_path, self.interactions.keywords)
+        self.interactions = BOWEvalEngine(self.DB_path, self.player_controller)
+        self.nlp = BOWParser(self.DB_path, self.interactions.keywords)
         self.keywords = self.interactions.keywords
 
     def tearDown(self):
@@ -37,7 +36,7 @@ class TestNLP(unittest.TestCase):
     def test_parse_input_KB_API(self):
         save_state = KnowledgeBaseAPI.get_all_music_entities
         KnowledgeBaseAPI.get_all_music_entities = MagicMock(return_value=['The Who'])
-        nlp = NLP(self.DB_path, self.keywords)  # Re-instantiate nlp so it uses the mock value.
+        nlp = BOWParser(self.DB_path, self.keywords)  # Re-instantiate nlp so it uses the mock value.
         output = nlp('play the who')
         self.assertEqual(str(output[0]), "['control_play']")
         self.assertEqual(str(output[1]), "['The Who']")
