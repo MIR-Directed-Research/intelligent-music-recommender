@@ -1,8 +1,8 @@
-import sys
-
-from command_evaluation.bag_of_words_eval_engine import EvalEngine
+from command_evaluation.bag_of_words_eval_engine import BOWEvalEngine
+from command_evaluation.tree_eval_engine import TreeEvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
-from nlp.nlp_layer import NLP
+from nlp.bag_of_words_parser import BOWParser
+from nlp.tree_parser import TreeParser
 
 
 class SystemEntry:
@@ -11,11 +11,16 @@ class SystemEntry:
 
     """
 
-    def __init__(self, db_path, player_controller):
+    def __init__(self, db_path, player_controller, parser_type='BagOfWords'):
         self.DB_path = db_path
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
-        self.interactions = EvalEngine(self.DB_path, player_controller)
-        self.nlp = NLP(self.DB_path, self.interactions.keywords)
+        self.parser_type = parser_type
+        if parser_type == 'BagOfWords':
+            self.parser = BOWParser(self.DB_path, self.eval_engine.keywords)
+            self.eval_engine = BOWEvalEngine(self.DB_path, player_controller)
+        elif parser_type == 'TREE':
+            self.parser = TreeParser(self.DB_path, self.eval_engine.keywords)
+            self.eval_engine = TreeEvalEngine(self.DB_path, player_controller)
 
     def __call__(self, raw_input: str):
         """The system's entrypoint.
@@ -27,12 +32,5 @@ class SystemEntry:
             raw_input: User input.
 
         """
-        commands, subjects, remaining_text = self.nlp(raw_input)
-        # TODO: Change these stderr outputs to logging.
-        # print('Matching DB Entities:\t{}'.format(subjects if subjects else 'NONE'), file=sys.stderr)
-        # print('Remaining Text:\t\t\t{}'.format(remaining_text if remaining_text else 'NONE'), file=sys.stderr)
-        # print('Commands:\t\t\t\t{}'.format(commands if commands else 'NONE'), file=sys.stderr)
-        self.interactions(subjects=subjects,
-                          commands=commands,
-                          remaining_text=remaining_text,
-                          )
+        commands, subjects, remaining_text = self.parser(raw_input)
+        self.eval_engine(self.parser(raw_input))
