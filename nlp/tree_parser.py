@@ -3,9 +3,7 @@ from functools import lru_cache
 
 import nltk
 
-from command_evaluation.tree_eval_engine import EvalEngine
 from knowledge_base.api import KnowledgeBaseAPI
-from tests.mock_objects import MockController
 
 
 class TreeParser:
@@ -19,19 +17,28 @@ class TreeParser:
     """
 
     def __init__(self, db_path, keywords):
-        self.unary_commands = keywords.get("unary")
-        self.binary_commands = keywords.get("binary")
+        self.keywords = keywords
         self.kb_api = KnowledgeBaseAPI(db_path)
         self.kb_named_entities = self.kb_api.get_all_music_entities()
 
     @property
     @lru_cache(1)
-    def _uniary_command_regexes(self):
+    def _unary_command_regexes(self):
         # Generate RegEx patterns from command signifiers.
         patterns = {}
-        for intent, keys in self.unary_commands.items():
+        for intent, keys in self.keywords.get("unary").items():
             if keys:
-                patterns[intent] = re.compile(r'\b'+r'\b|\b'.join(keys)+r'\b')
+                patterns[intent] = re.compile(r'\b' + r'\b|\b'.join(keys) + r'\b')
+        return patterns
+
+    @property
+    @lru_cache(1)
+    def _terminal_command_regexes(self):
+        # Generate RegEx patterns from command signifiers.
+        patterns = {}
+        for intent, keys in self.keywords.get("terminal").items():
+            if keys:
+                patterns[intent] = re.compile(r'\b' + r'\b|\b'.join(keys) + r'\b')
         return patterns
 
     @property
@@ -39,9 +46,9 @@ class TreeParser:
     def _binary_command_regexes(self):
         # Generate RegEx patterns from command signifiers.
         patterns = {}
-        for intent, keys in self.binary_commands.items():
+        for intent, keys in self.keywords.get("binary").items():
             if keys:
-                patterns[intent] = re.compile('|'.join(keys))
+                patterns[intent] = re.compile(r'\b' + r'\b|\b'.join(keys) + r'\b')
         return patterns
 
     def parse_entities_and_commands(self, msg):
@@ -68,7 +75,7 @@ class TreeParser:
                     return algorithm(left) + [entity.strip()] + algorithm(right)
 
             # 2. Parse unary commands.
-            for intent, pattern in self._uniary_command_regexes.items():
+            for intent, pattern in self._unary_command_regexes.items():
                 sub_msg = re.sub(pattern, 'MARKER', text)
                 if sub_msg != text:
                     pieces = sub_msg.split('MARKER')
@@ -76,7 +83,16 @@ class TreeParser:
                     right = pieces[1]
                     return algorithm(left) + [intent] + algorithm(right)
 
-            # 3. Parse binary commands.
+            # 3. Parse terminal commands.
+            for intent, pattern in self._terminal_command_regexes.items():
+                sub_msg = re.sub(pattern, 'MARKER', text)
+                if sub_msg != text:
+                    pieces = sub_msg.split('MARKER')
+                    left = pieces[0]
+                    right = pieces[1]
+                    return algorithm(left) + [intent] + algorithm(right)
+
+            # 4. Parse binary commands.
             for intent, pattern in self._binary_command_regexes.items():
                 sub_msg = re.sub(pattern, 'MARKER', text)
                 if sub_msg != text:
@@ -99,24 +115,26 @@ class TreeParser:
 
         """
         grammar = nltk.CFG.fromstring("""
-        Result -> Unary_Command Entity
+        Output -> Terminal_Command Result
+        Result -> Entity
         Result -> Unary_Command Result
         Result -> Result Binary_Command Result
         Entity -> '{}'
         Unary_Command -> '{}'
+        Terminal_Command -> '{}'
         Binary_Command -> '{}' 
         """.format(
             "' | '".join(self.kb_named_entities),
-            "' | '".join(self.unary_commands.keys()),
-            "' | '".join(self.binary_commands.keys()),
+            "' | '".join(self.keywords.get("unary").keys()),
+            "' | '".join(self.keywords.get("terminal").keys()),
+            "' | '".join(self.keywords.get("binary").keys()),
         ))
 
         parser = nltk.ChartParser(grammar)
-        trees = []
-        for tree in parser.parse(tokens):
-            print(tree)
-            trees.append(tree)
-        return trees
+        # TODO: Returns the first tree, but need to deal with
+        #       case where grammar is ambiguous, and more than
+        #       one tree is returned.
+        return next(parser.parse(tokens))
 
     def __call__(self, msg: str):
         # Remove punctuation from the string
@@ -132,14 +150,3 @@ class TreeParser:
         # Generate an NLTK parse tree
         tree = self.generate_parse_tree(clean_tokens)
         return tree
-
-
-if __name__ == "__main__":
-    DB_path = "../tests/test.db"
-    kb_api = KnowledgeBaseAPI(DB_path)
-    state = {}
-    player_controller = MockController(state)
-    interactions = EvalEngine(DB_path, player_controller)
-    tree_parser = TreeParser(DB_path, interactions.keywords)
-
-    print(tree_parser("play something similar to u2 and justin bieber"))
