@@ -1,5 +1,8 @@
+import sys
 from collections import OrderedDict
 from typing import List
+
+import nltk
 
 from knowledge_base.api import KnowledgeBaseAPI
 

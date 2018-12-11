@@ -115,7 +115,7 @@ class TreeParser:
 
         """
         grammar = nltk.CFG.fromstring("""
-        Output -> Terminal_Command Result
+        Root -> Terminal_Command Result
         Result -> Entity
         Result -> Unary_Command Result
         Result -> Result Binary_Command Result
