@@ -77,25 +77,13 @@ class BOWEvalEngine:
         ])
 
     @property
-    def binary_commands(self):
-        return OrderedDict([
-            ('control_intersection', (['and'], self._control_intersection)),
-            ('control_union', (['or'], self._control_union)),
-        ])
-
-    @property
     def keywords(self):
         """For each type of command, generate a dictionary
         of keywords that map to the specific command (intent)
 
         """
         return {
-            "unary": {
-                k: v[0] for k, v in self.intents.items()
-            },
-            "binary": {
-                k: v[0] for k, v in self.binary_commands.items()
-            },
+            k: v[0] for k, v in self.intents.items()
         }
 
     @property

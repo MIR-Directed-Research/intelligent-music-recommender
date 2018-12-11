@@ -16,11 +16,11 @@ class SystemEntry:
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
         self.parser_type = parser_type
         if parser_type == 'BagOfWords':
-            self.parser = BOWParser(self.DB_path, self.eval_engine.keywords)
             self.eval_engine = BOWEvalEngine(self.DB_path, player_controller)
+            self.parser = BOWParser(self.DB_path, self.eval_engine.keywords)
         elif parser_type == 'TREE':
-            self.parser = TreeParser(self.DB_path, self.eval_engine.keywords)
             self.eval_engine = TreeEvalEngine(self.DB_path, player_controller)
+            self.parser = TreeParser(self.DB_path, self.eval_engine.keywords)
 
     def __call__(self, raw_input: str):
         """The system's entrypoint.
@@ -32,5 +32,5 @@ class SystemEntry:
             raw_input: User input.
 
         """
-        commands, subjects, remaining_text = self.parser(raw_input)
-        self.eval_engine(self.parser(raw_input))
+
+        self.eval_engine(*self.parser(raw_input))

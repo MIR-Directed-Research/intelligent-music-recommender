@@ -23,7 +23,7 @@ class BOWParser:
         except LookupError:
             nltk.download('stopwords')
 
-        self.unary_commands = keywords.get("unary")
+        self.commands = keywords
         self.kb_api = KnowledgeBaseAPI(db_path)
         self.db_nouns = self.kb_api.get_all_music_entities()
 
@@ -31,7 +31,7 @@ class BOWParser:
         # Remove all keywords from stopwords
         stop_words = set(stopwords.words('english'))
         stop_words |= BOWParser.extra_stopwords
-        for _, words in self.unary_commands.items():
+        for _, words in self.commands.items():
             for word in words:
                 try:
                     stop_words.remove(word)
@@ -42,7 +42,7 @@ class BOWParser:
     def _gen_patterns(self):
         # Generate RegEx patterns from keywords
         patterns = {}
-        for intent, keys in self.unary_commands.items():
+        for intent, keys in self.commands.items():
             patterns[intent] = re.compile(r'\b'+r'\b|\b'.join(keys)+r'\b')
         return patterns
 
@@ -76,4 +76,4 @@ class BOWParser:
                 clean_msg = sub_msg
 
         remaining_text = clean_msg.strip()
-        return intents, subjects, remaining_text
+        return subjects, intents, remaining_text
