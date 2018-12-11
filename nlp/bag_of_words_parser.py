@@ -6,7 +6,7 @@ from nltk.corpus import stopwords
 from knowledge_base.api import KnowledgeBaseAPI
 
 
-class NLP:
+class BOWParser:
     """
     This layer stores the NLP specific tooling and logic.
 
@@ -30,7 +30,7 @@ class NLP:
     def _get_stop_words(self):
         # Remove all keywords from stopwords
         stop_words = set(stopwords.words('english'))
-        stop_words |= NLP.extra_stopwords
+        stop_words |= BOWParser.extra_stopwords
         for _, words in self.unary_commands.items():
             for word in words:
                 try:

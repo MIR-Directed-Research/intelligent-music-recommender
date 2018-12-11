@@ -7,7 +7,7 @@ import nltk
 from knowledge_base.api import KnowledgeBaseAPI
 
 
-class EvalEngine:
+class TreeEvalEngine:
     """This class stores the possible interactions between the
     user and the system, and the logic to act on them.
 
