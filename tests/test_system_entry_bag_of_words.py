@@ -8,7 +8,7 @@ from tests.mock_objects import MockController
 from scripts import test_db_utils
 
 
-class TestSystemEntry(unittest.TestCase):
+class TestSystemEntryBOW(unittest.TestCase):
     def setUp(self):
         self.DB_path = test_db_utils.create_and_populate_db()
         self.results_dict = {}
