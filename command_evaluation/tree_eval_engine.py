@@ -25,11 +25,7 @@ class EvalEngine:
         self.DB_path = db_path
         self.kb_api = KnowledgeBaseAPI(self.DB_path)
 
-    def __call__(self,
-                 subjects: List[str] = None,
-                 commands: List[str] = None,
-                 remaining_text: str = None,
-                 ):
+    def __call__(self, nltk_parse_tree):
         """Initiates a sequence of commands that will act
         on the subject parameters in order of command
         precedence.
@@ -42,20 +38,11 @@ class EvalEngine:
         Returns:
 
         """
-        # Sort the commands by precedence.
-        sorted_commands = []
-        for c in self.command_precedence:
-            if c in commands:
-                sorted_commands.append(c)
-
         # Call the highest precedence command.
-        self._next_operation(subjects=subjects,
-                             commands=sorted_commands,
-                             remaining_text=remaining_text,
-                             )
+        self._eval(nltk_parse_tree)
 
     @property
-    def intents(self):
+    def unary_commands(self):
         """Returns a mapping that stores signifiers of user's
         intent, along with the `commands` and the functions
         that they map to.
@@ -69,14 +56,19 @@ class EvalEngine:
 
         """
         return OrderedDict([
+            ('control_forward', (['skip', 'next'], self._control_skip)),
+            ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
+        ])
+
+    @property
+    def terminal_commands(self):
+        return OrderedDict([
             ('query_commands', (['hi', 'how', 'hello'], self._query_commands)),
             ('control_stop', (['stop'], self._control_stop)),
             ('control_pause', (['pause'], self._control_pause)),
-            ('control_forward', (['skip', 'next'], self._control_skip)),
-            ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
             ('control_play', (['start', 'play'], self._control_play)),
             ('query_artist', (['who', 'artist'], self._query_artist)),
-            ('default', ([], self._default)),
+
         ])
 
     @property
@@ -94,7 +86,10 @@ class EvalEngine:
         """
         return {
             "unary": {
-                k: v[0] for k, v in self.intents.items()
+                k: v[0] for k, v in self.unary_commands.items()
+            },
+            "terminal": {
+                k: v[0] for k, v in self.terminal_commands.items()
             },
             "binary": {
                 k: v[0] for k, v in self.binary_commands.items()
@@ -103,22 +98,17 @@ class EvalEngine:
 
     @property
     def actions(self):
-        return {k: v[1] for k, v in self.intents.items()}
+        return {k: v[1] for k, v in self.unary_commands.items()}
 
     @property
     def command_precedence(self):
-        return [k for k, v in self.intents.items()]
+        return [k for k, v in self.unary_commands.items()]
 
-    def _query_commands(self,
-                        subjects: List[str] = None,
-                        commands: List[str] = None,
-                        remaining_text: str = None,
-                        response_msg: str = None,
-                        ):
+    def _query_commands(self, entities):
         """Terminal command. Reports on possible commands and interactions.
 
         """
-        if subjects:
+        if entities:
             # Handle question about specific `subjects`.
             self.player.respond("I'm sorry, I can't answer that one")
         else:
@@ -127,12 +117,7 @@ class EvalEngine:
                                 "I can also find songs that are similar to other "
                                 "artists.")
 
-    def _control_play(self,
-                      subjects: List[str] = None,
-                      commands: List[str] = None,
-                      remaining_text: str = None,
-                      response_msg: str = None,
-                      ):
+    def _control_play(self, entities: List):
         """Terminal command. Plays the subjects specified.
 
        TODO:
@@ -140,107 +125,91 @@ class EvalEngine:
                - if it's of type song, play it
                - if it's anything else, get the songs associated with
                  it and play in DESC order
-
         """
-        if subjects:
-            self.player.play(subjects)
-        elif remaining_text:
-            self.player.respond("I'm sorry, I couldn't find that for you.")
+        if entities:
+            self.player.play(entities)
         else:
-            self.player.respond('Resuming the current song')
+            self.player.respond("I'm sorry, I couldn't find that for you.")
 
-    def _control_stop(self,
-                      subjects: List[str] = None,
-                      commands: List[str] = None,
-                      remaining_text: str = None,
-                      response_msg: str = None,
-                      ):
-        self.player.stop(subjects)
+    def _control_stop(self):
+        self.player.stop()
 
-    def _control_pause(self,
-                       subjects: List[str] = None,
-                       commands: List[str] = None,
-                       remaining_text: str = None,
-                       response_msg: str = None,
-                       ):
-        self.player.pause(subjects)
+    def _control_pause(self):
+        self.player.pause()
 
-    def _control_skip(self,
-                      subjects: List[str] = None,
-                      commands: List[str] = None,
-                      remaining_text: str = None,
-                      response_msg: str = None,
-                      ):
-        # TODO: Add number parsing for "skip forward 2 songs".
-        self.player.skip(subjects)
+    def _control_skip(self):
+        self.player.skip()
 
-    def _control_intersection(self,
-                              subjects: List[str] = None,
-                              commands: List[str] = None,
-                              remaining_text: str = None,
-                              response_msg: str = None,
-                              ):
-        # TODO
-        self.player.skip(subjects)
+    def _control_intersection(self):
+        self.player.skip()
 
-    def _control_union(self,
-                       subjects: List[str] = None,
-                       commands: List[str] = None,
-                       remaining_text: str = None,
-                       response_msg: str = None,
-                       ):
-        # TODO
-        self.player.skip(subjects)
+    def _control_union(self):
+        self.player.skip()
 
-    def _query_artist(self,
-                      subjects: List[str] = None,
-                      commands: List[str] = None,
-                      remaining_text: str = None,
-                      response_msg: str = None,
-                      ):
-        # TODO: implement for fetching current state, ie "who is this artist?"
-        self.player.respond(subjects)
+    def _query_artist(self, entities):
+        self.player.respond(entities)
 
-    def _query_similar_entities(self,
-                                subjects: List[str] = None,
-                                commands: List[str] = None,
-                                remaining_text: str = None,
-                                response_msg: str = None,
-                                ):
+    def _query_similar_entities(self, subjects):
         similar_entities = []
         for e in subjects:
             similar_entities += self.kb_api.get_related_entities(e)
 
-        if not similar_entities:
-            self.player.respond("I'm sorry, I couldn't find that for you.")
-        else:
-            self._next_operation(subjects=similar_entities,
-                                 commands=commands,
-                                 remaining_text=remaining_text,
-                                 response_msg=response_msg,
-                                 )
+        return similar_entities
 
-    def _default(self,
-                 subjects: List[str] = None,
-                 commands: List[str] = None,
-                 remaining_text: str = None,
-                 response_msg: str = None,
-                 ):
-        self.player.respond("I'm sorry, I don't understand.")
-
-    def _next_operation(self,
-                        subjects: List[str] = None,
-                        commands: List[str] = None,
-                        remaining_text: str = None,
-                        response_msg: str = None,
-                        ):
+    def _eval(self, tree: nltk.tree.Tree):
         """Calls the next function in the commands parameter.
 
         """
-        next_command_name = commands.pop(0) if commands else self._default
-        next_func = self.actions.get(next_command_name, self._default)
-        next_func(subjects=subjects,
-                  commands=commands,
-                  remaining_text=remaining_text,
-                  response_msg=response_msg,
-                  )
+
+        """
+        Root -> Terminal_Command Result
+        Result -> Entity
+        Result -> Unary_Command Result
+        Result -> Result Binary_Command Result
+        Entity -> '{}'
+        Unary_Command -> '{}'
+        Terminal_Command -> '{}'
+        Binary_Command -> '{}'
+
+        "play something similar to u2"
+
+        (Root
+          (Terminal_Command control_play)
+          (Result
+            (Unary_Command query_similar_entities)
+            (Result (Entity U2))))
+        """
+
+        if tree.label() == "Root":
+            func = self._eval(tree[0])
+            result = self._eval(tree[1])
+            func(result)
+            return
+        elif tree.label() == "Result":
+            if tree[0].label() == "Entity":
+                return self._eval(tree[0])
+            if tree[0].label() == "Unary_Command":
+                func = self._eval(tree[0])
+                result = self._eval(tree[1])
+                return func(result)
+            if tree[1].label() == "Binary_Command":
+                result_left = self._eval(tree[0])
+                func = self._eval(tree[1])
+                result_right = self._eval(tree[2])
+                return func(result_left, result_right)
+        elif tree.label() == "Unary_Command":
+            func = self.unary_commands.get(tree[0])[1]
+            return func
+        elif tree.label() == "Terminal_Command":
+            func = self.terminal_commands.get(tree[0])[1]
+            return func
+        elif tree.label() == "Binary_Command":
+            func = self.binary_commands.get(tree[0])[1]
+            return func
+        elif tree.label() == "Entity":
+            return [tree[0]]
+
+        print("Error: CFG label rule not defined in "
+              "command_self._evaluation.tree_self._eval_engine."
+              "self._evalEngine#_eval",
+              file=sys.stderr)
