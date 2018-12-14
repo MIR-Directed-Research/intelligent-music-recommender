@@ -31,9 +31,12 @@ from controller.system_entry import SystemEntry
 DEFAULT_DB = "./knowledge_base/knowledge_base.db"
 
 
-def run_app(db_path):
+def run_app(db_path, nlp_parser):
     player_controller = DummyController()
-    system_entry = SystemEntry(db_path, player_controller)
+    system_entry = SystemEntry(db_path=db_path,
+                               player_controller=player_controller,
+                               parser_type=nlp_parser,
+                               )
     print("Welcome!")
     for text in sys.stdin:
         system_entry(text)
@@ -46,6 +49,12 @@ def main():
     parser.add_argument("-d", nargs="?", type=str, dest="db_path",
                         help=" Specifies a relative path to the DB, (include "
                              "the filename). Ex: -d ./some_db.sql")
+    parser.add_argument("-t", "--tree_parser",
+                        help=" Use a 'Tree' parser instead of a 'Bag of Words'"
+                             "parser.  The tree parser uses a Context Free"
+                             "Grammar to parse the input into a tree of command"
+                             "expressions."                                                   "",
+                        action="store_true")
     args = parser.parse_args()
 
     db_path = args.db_path or DEFAULT_DB
@@ -57,8 +66,10 @@ def main():
               file=sys.stderr)
         sys.exit()
 
+    nlp_parser = 'TREE' if args.tree_parser else 'BagOfWords'
+
     print("Running app...")
-    run_app(db_path)
+    run_app(db_path, nlp_parser)
 
 
 if __name__ == "__main__":

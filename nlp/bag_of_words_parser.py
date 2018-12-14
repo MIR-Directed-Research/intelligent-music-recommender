@@ -6,7 +6,7 @@ from nltk.corpus import stopwords
 from knowledge_base.api import KnowledgeBaseAPI
 
 
-class NLP:
+class BOWParser:
     """
     This layer stores the NLP specific tooling and logic.
 
@@ -30,7 +30,7 @@ class NLP:
     def _get_stop_words(self):
         # Remove all keywords from stopwords
         stop_words = set(stopwords.words('english'))
-        stop_words |= NLP.extra_stopwords
+        stop_words |= BOWParser.extra_stopwords
         for _, words in self.commands.items():
             for word in words:
                 try:
@@ -43,7 +43,7 @@ class NLP:
         # Generate RegEx patterns from keywords
         patterns = {}
         for intent, keys in self.commands.items():
-            patterns[intent] = re.compile('|'.join(keys))
+            patterns[intent] = re.compile(r'\b'+r'\b|\b'.join(keys)+r'\b')
         return patterns
 
     def __call__(self, msg: str):
@@ -76,4 +76,4 @@ class NLP:
                 clean_msg = sub_msg
 
         remaining_text = clean_msg.strip()
-        return intents, subjects, remaining_text
+        return subjects, intents, remaining_text

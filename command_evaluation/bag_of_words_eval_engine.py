@@ -4,7 +4,7 @@ from typing import List
 from knowledge_base.api import KnowledgeBaseAPI
 
 
-class EvalEngine:
+class BOWEvalEngine:
     """This class stores the possible interactions between the
     user and the system, and the logic to act on them.
 
@@ -73,12 +73,18 @@ class EvalEngine:
             ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
             ('control_play', (['start', 'play'], self._control_play)),
             ('query_artist', (['who', 'artist'], self._query_artist)),
-            ('default', ([''], self._default)),
+            ('default', ([], self._default)),
         ])
 
     @property
     def keywords(self):
-        return {k: v[0] for k, v in self.intents.items()}
+        """For each type of command, generate a dictionary
+        of keywords that map to the specific command (intent)
+
+        """
+        return {
+            k: v[0] for k, v in self.intents.items()
+        }
 
     @property
     def actions(self):
@@ -151,6 +157,24 @@ class EvalEngine:
                       response_msg: str = None,
                       ):
         # TODO: Add number parsing for "skip forward 2 songs".
+        self.player.skip(subjects)
+
+    def _control_intersection(self,
+                              subjects: List[str] = None,
+                              commands: List[str] = None,
+                              remaining_text: str = None,
+                              response_msg: str = None,
+                              ):
+        # TODO
+        self.player.skip(subjects)
+
+    def _control_union(self,
+                       subjects: List[str] = None,
+                       commands: List[str] = None,
+                       remaining_text: str = None,
+                       response_msg: str = None,
+                       ):
+        # TODO
         self.player.skip(subjects)
 
     def _query_artist(self,
