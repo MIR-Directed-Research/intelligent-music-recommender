@@ -193,7 +193,7 @@ class KnowledgeBaseAPI:
 
         except sqlite3.OperationalError as e:
             print("ERROR: failed to find songs for artist '{0}'".format(
-                name))
+                artist))
             return None
 
     def get_node_ids_by_entity_type(self, entity_name):
