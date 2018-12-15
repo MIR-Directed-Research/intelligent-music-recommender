@@ -191,16 +191,20 @@ class TreeParser:
             safe_vals = [s for s in vals if "\'" not in s]
             return "' | '".join(safe_vals) or "NONE"
 
-        grammar = nltk.CFG.fromstring("""
-        Root -> Terminal_Command Result
-        Root -> Terminal_Command
-        Result -> Entity
-        Result -> Unary_Command Result
-        Result -> Result Binary_Command Result
-        Entity -> '{}'
-        Unary_Command -> '{}'
-        Terminal_Command -> '{}'
-        Binary_Command -> '{}' 
+        # A Probabilistic Context Free Grammar (PCFG)
+        # can be used to simulate "operator precedence",
+        # which removes the problems of ambiguity in
+        # the grammar.
+        grammar = nltk.PCFG.fromstring("""
+        Root -> Terminal_Command Result         [0.6]
+        Root -> Terminal_Command                [0.4]
+        Result -> Entity                        [0.5]
+        Result -> Unary_Command Result          [0.1]
+        Result -> Result Binary_Command Result  [0.4]
+        Entity -> '{}'                          [1.0]
+        Unary_Command -> '{}'                   [1.0]
+        Terminal_Command -> '{}'                [1.0]
+        Binary_Command -> '{}'                  [1.0]
         """.format(
             gen_lexing_patterns(self.kb_named_entities),
             gen_lexing_patterns(self.keywords.get("unary").keys()),
@@ -208,7 +212,7 @@ class TreeParser:
             gen_lexing_patterns(self.keywords.get("binary").keys()),
         ))
 
-        parser = nltk.ChartParser(grammar)
+        parser = nltk.ViterbiParser(grammar)
         # TODO: Returns the first tree, but need to deal with
         #       case where grammar is ambiguous, and more than
         #       one tree is returned.
