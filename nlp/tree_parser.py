@@ -36,7 +36,7 @@ class TreeParser:
 
         """
         # Remove punctuation from the string
-        msg = re.sub(r"[,.;@#?!&$']+\ *",
+        msg = re.sub(r"[.?']+\ *",
                      " ",
                      msg,
                      flags=re.VERBOSE)
@@ -119,7 +119,7 @@ class TreeParser:
             # 1. Parse named entities.
             for entity in self.kb_named_entities:
                 if entity.lower() in text.lower():
-                    pieces = text.split(entity.lower())
+                    pieces = text.lower().split(entity.lower())
                     left = pieces[0]
                     right = pieces[1]
                     if left == text or right == text:
@@ -183,23 +183,36 @@ class TreeParser:
         #          -  Play something similar to despicito but faster
         #          -  Play something similar to u2 and justin bieber
 
-        grammar = nltk.CFG.fromstring("""
-        Root -> Terminal_Command Result
-        Result -> Entity
-        Result -> Unary_Command Result
-        Result -> Result Binary_Command Result
-        Entity -> '{}'
-        Unary_Command -> '{}'
-        Terminal_Command -> '{}'
-        Binary_Command -> '{}' 
+        def gen_lexing_patterns(vals: List[str]):
+            # TODO: Here we remove entries containing ',
+            #       as it is a special character used by
+            #       the NLTK parser. We need to fix this
+            #       eventually.
+            safe_vals = [s for s in vals if "\'" not in s]
+            return "' | '".join(safe_vals) or "NONE"
+
+        # A Probabilistic Context Free Grammar (PCFG)
+        # can be used to simulate "operator precedence",
+        # which removes the problems of ambiguity in
+        # the grammar.
+        grammar = nltk.PCFG.fromstring("""
+        Root -> Terminal_Command Result         [0.6]
+        Root -> Terminal_Command                [0.4]
+        Result -> Entity                        [0.5]
+        Result -> Unary_Command Result          [0.1]
+        Result -> Result Binary_Command Result  [0.4]
+        Entity -> '{}'                          [1.0]
+        Unary_Command -> '{}'                   [1.0]
+        Terminal_Command -> '{}'                [1.0]
+        Binary_Command -> '{}'                  [1.0]
         """.format(
-            "' | '".join(self.kb_named_entities) or "NONE",
-            "' | '".join(self.keywords.get("unary").keys()) or "NONE",
-            "' | '".join(self.keywords.get("terminal").keys()) or "NONE",
-            "' | '".join(self.keywords.get("binary").keys()) or "NONE",
+            gen_lexing_patterns(self.kb_named_entities),
+            gen_lexing_patterns(self.keywords.get("unary").keys()),
+            gen_lexing_patterns(self.keywords.get("terminal").keys()),
+            gen_lexing_patterns(self.keywords.get("binary").keys()),
         ))
 
-        parser = nltk.ChartParser(grammar)
+        parser = nltk.ViterbiParser(grammar)
         # TODO: Returns the first tree, but need to deal with
         #       case where grammar is ambiguous, and more than
         #       one tree is returned.

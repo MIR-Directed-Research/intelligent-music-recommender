@@ -49,14 +49,14 @@ class TestMusicKnowledgeBaseAPI(unittest.TestCase):
         self.assertEqual(artist_data, [], "Expected 'None' result for unknown artist.")
 
     def test_get_songs(self):
-        res = self.kb_api.get_songs("Justin Bieber")
+        res = self.kb_api.get_songs_by_artist("Justin Bieber")
         self.assertEqual(res, ["Despacito", "Sorry"], "Songs retrieved for 'Justin Bieber' did not match expected.")
 
-        res = self.kb_api.get_songs("Justin Timberlake")
+        res = self.kb_api.get_songs_by_artist("Justin Timberlake")
         self.assertEqual(res, ["Rock Your Body"], "Songs retrieved for 'Justin Timberlake' did not match expected.")
 
     def test_get_songs_unknown_artist(self):
-        res = self.kb_api.get_songs("Unknown artist")
+        res = self.kb_api.get_songs_by_artist("Unknown artist")
         self.assertEqual(res, None, "Unexpected songs retrieved for unknown artist.")
 
     def test_find_similar_song(self):

@@ -155,7 +155,7 @@ class KnowledgeBaseAPI:
             ))
         return results
 
-    def get_songs(self, artist):
+    def get_songs_by_artist(self, artist):
         """Retrieves list of songs for given artist.
 
         Param:
