@@ -52,6 +52,8 @@ class TreeEvalEngine:
         """
         return OrderedDict([
             ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
+            ('query_songs_by_artist', (['songs by'], self._query_songs_by_artist)),
+            ('query_artist_by_song', (['artist'], self._query_artist_by_song)),
         ])
 
     @property
@@ -71,7 +73,7 @@ class TreeEvalEngine:
             ('control_stop', (['stop'], self._control_stop)),
             ('control_pause', (['pause'], self._control_pause)),
             ('control_play', (['start', 'play'], self._control_play)),
-            ('query_artist', (['who', 'artist'], self._query_artist)),
+            ('query_info', (['who', 'what'], self._query_info)),
             ('control_forward', (['skip', 'next'], self._control_skip)),
 
         ])
@@ -89,8 +91,7 @@ class TreeEvalEngine:
 
         """
         return OrderedDict([
-            ('control_intersection', (['and'], self._control_intersection)),
-            ('control_union', (['or'], self._control_union)),
+            ('control_union', (['or', 'and'], self._control_union)),
         ])
 
     @property
@@ -135,10 +136,13 @@ class TreeEvalEngine:
                                 "I can also find songs that are similar to other "
                                 "artists.")
 
-    def _control_play(self, entities: List):
+    def _control_play(self, entities: List[str]):
         """Terminal command.
 
         Plays the subjects specified.
+
+        Args:
+            entities: A list of Entities.
 
        TODO:
            - query db for entity
@@ -175,48 +179,91 @@ class TreeEvalEngine:
         """
         self.player.skip()
 
-    def _control_intersection(self, result1: List[str], result2: List[str]):
-        """Binary Command
-
-        Returns the intersection of the two parameters.
-
-        Args:
-            result1: A list of Entities.
-            result2: A list of Entities.
-
-        Returns: A list of Entities
-
-        """
-        return list(set(result1).intersection(set(result2)))
-
-    def _control_union(self, result1: List[str], result2: List[str]):
+    def _control_union(self, entities_1: List[str], entities_2: List[str]):
         """Binary Command
 
             Returns the intersection of the two parameters.
 
             Args:
-                result1: A list of Entities.
-                result2: A list of Entities.
+                entities_1: A list of Entities.
+                entities_2: A list of Entities.
 
             Returns: A list of Entities
 
             """
-        return list(set(result1).union(set(result2)))
+        return list(set(entities_1).union(set(entities_2)))
 
-    def _query_artist(self, entities: List[str]):
+    def _query_info(self, entities: List[str]):
         """Terminal Command
 
         Queries the artists for each Entity.
+
+        Args:
+            entities: A list of Entities.
 
         """
         self.player.respond(entities)
 
     def _query_similar_entities(self, entities: List[str]):
+        """Unary Command
+
+        Returns a list of related Entities for
+        all Entities in the parameters.
+
+        Args:
+            entities: A list of Entities.
+
+        """
         similar_entities = []
         for e in entities:
-            similar_entities += self.kb_api.get_related_entities(e)
+            # Don't return the artists given in the
+            # parms (for the case where there are
+            # multiple artists and they are related
+            # to each other).
+            similar_entities += [
+                ent
+                for ent
+                in self.kb_api.get_related_entities(e)
+                if ent not in entities
+            ]
 
         return similar_entities
+
+    def _query_songs_by_artist(self, entities: List[str]):
+        """Unary Command
+
+        Returns a list of Artists for
+        all Entities in the parameters.
+
+        Args:
+            entities: A list of Entities.
+
+        """
+        artists = []
+        for e in entities:
+            artists += self.kb_api.get_songs_by_artist(e)
+
+        return artists
+
+    def _query_artist_by_song(self, entities: List[str]):
+        """Unary Command
+
+        Returns a list of Artists for
+        all Entities in the parameters.
+
+        Args:
+            entities: A list of Entities.
+
+        """
+        artists = []
+        for e in entities:
+            artists += [
+                song.get('artist_name')
+                for song
+                in self.kb_api.get_song_data(e)
+            ]
+
+        return artists
 
     def _eval(self, tree: nltk.tree.Tree):
         """This function will evaluate the parse tree
