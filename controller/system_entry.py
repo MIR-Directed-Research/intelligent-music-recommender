@@ -35,4 +35,4 @@ class SystemEntry:
         if self.parser_type == 'BagOfWords':
             self.eval_engine(*self.parser(raw_input))
         elif self.parser_type == 'TREE':
-            self.eval_engine(self.parser(raw_input))
+            self.eval_engine(self.parser, raw_input)
