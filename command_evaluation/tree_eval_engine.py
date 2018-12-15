@@ -51,7 +51,7 @@ class TreeEvalEngine:
         """
         return OrderedDict([
             ('query_similar_entities', (['like', 'similar'], self._query_similar_entities)),
-            ('query_songs_by_artist', (['songs by'], self._query_songs_by_artist)),
+            ('query_songs_by_artist', (['songs by', 'by'], self._query_songs_by_artist)),
             ('query_artist_by_song', (['artist'], self._query_artist_by_song)),
         ])
 
@@ -273,7 +273,7 @@ class TreeEvalEngine:
 
         """
         if tree.label() == "Root":
-            if len(tree):
+            if len(tree) == 1:
                 func = self._evaluate(tree[0])
                 func()
             else:
