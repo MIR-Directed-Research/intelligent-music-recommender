@@ -8,7 +8,7 @@ Before you can run the alpha version of our app or the tests, you must:
 * Install Python 3.5
 * Install the project dependencies: `pip install -r requirements.txt`
 
-For a detailed description of setup for development purposes, please 
+For a detailed description of setup for development purposes, please
 see the [wiki page](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing.).
 
 ## Running the Alpha App
@@ -27,20 +27,26 @@ Welcome!
 Hello
 Response: Hi there! Ask me to play artists or songs. I can also find songs that are similar to other artists.
 
-Can you play Justin Bieber?
-Playing: ['Justin Bieber']
+Play Ariana Grande
+Playing: ['Ariana Grande']
 
-Can you play U2?
-Playing: ['U2']
-
-Can you play Mozart?
+Play Mozart
 Response: I'm sorry, I couldn't find that for you.
 
-Can you play songs like Despacito?
-Playing: ['Rock Your Body']
+What are some songs by Ariana Grande?
+Response: ['Santa Baby', 'Santa Tell Me', 'thank u, next']
 
-Can you play artists like Justin Bieber?
-Playing: ['Justin Timberlake', 'Shawn Mendes']
+What are some songs by Ariana Grande and Justin Bieber?
+Response: ['Santa Baby', 'Santa Tell Me', 'thank u, next', 'Friends (with BloodPop®)', 'No Brainer']
+
+Who is the artist of the song thank u, next?
+Response: ['Ariana Grande']
+
+What are some artists similar to Ariana Grande?
+Response: ['Halsey', 'DNCE', 'Selena Gomez', 'Alessia Cara', 'ZAYN', 'Rita Ora', 'Zara Larsson', 'Dua Lipa', 'Demi Lovato', 'Tinashe', 'Taylor Swift', 'Miley Cyrus', 'Troye Sivan', 'Camila Cabello', 'Julia Michaels', 'Little Mix', 'Hailee Steinfeld', 'Madison Beer', 'Carly Rae Jepsen', 'Fifth Harmony']
+
+Play artists like Justin Bieber
+Playing: ['DNCE', 'Selena Gomez', 'Alessia Cara', 'ZAYN', 'Zara Larsson', 'Demi Lovato', 'Taylor Swift', 'Miley Cyrus', 'Camila Cabello', 'Madison Beer', 'Fifth Harmony', 'Shawn Mendes', 'Niall Horan', 'Liam Payne', 'One Direction', 'Austin Mahone', 'Selena Gomez & The Scene', 'Nick Jonas', 'Jonas Brothers', 'Cody Simpson']
 ```
 
 More information about configuring the CLI can be found in the [wiki](https://github.com/MIR-Directed-Research/intelligent-music-recommender/wiki/Contributing).
