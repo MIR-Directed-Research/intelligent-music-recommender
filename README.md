@@ -2,6 +2,15 @@
 # Intelligent Music Recommender
 A conversational music retrieval search engine.
 
+## Overview
+This app retrieves info about musical artists and sogns based on user requests in the form of natural language text input. At a high-level, the app consists of:
+* UI modules for relaying user input and system output
+* A evaluation engine that interprets user input and calls the knowledge base API accordingly
+  * This component may be configured to use a bag-of-words parser or a more sophisticated CFG parser
+* A knowledge representation system that encapsulates a semantic network and exposes an API for retrieving info about musical entities
+
+See the example output below for examples!
+
 ## Prerequisites
 Before you can run the alpha version of our app or the tests, you must:
 * [Install SQLite 3](https://www.sqlite.org/download.html)
