@@ -28,19 +28,14 @@ First, follow the instructions in the prerequisites section. Then, from the proj
 
 For example:
 ```
-$ python view/cli.py
+# the "-t" option enables the CFG Tree Parser
+$ python view/cli.py -t
 Initializing app...
 Running app...
 Welcome!
 
-Hello
-Response: Hi there! Ask me to play artists or songs. I can also find songs that are similar to other artists.
-
 Play Ariana Grande
 Playing: ['Ariana Grande']
-
-Play Mozart
-Response: I'm sorry, I couldn't find that for you.
 
 What are some songs by Ariana Grande?
 Response: ['Santa Baby', 'Santa Tell Me', 'thank u, next']
