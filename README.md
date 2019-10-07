@@ -3,7 +3,7 @@
 A conversational music retrieval search engine.
 
 ## Overview
-This app retrieves info about musical artists and songss based on user requests in the form of natural language text input. At a high-level, the app consists of:
+This app retrieves info about musical artists and songs based on user requests in the form of natural language text input. At a high-level, the app consists of:
 * UI modules for relaying user input and system output
 * A evaluation engine that interprets user input and calls the knowledge base API accordingly
   * This component may be configured to use a bag-of-words parser or a more sophisticated CFG parser
